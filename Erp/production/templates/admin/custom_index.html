@@ -1,0 +1,9 @@
+{% extends "admin/index.html" %}
+{% block content %}
+<div style="margin-bottom: 20px;">
+  <a href="{% url 'upload_excel' %}" class="button" style="background: #4CAF50; color: white; padding: 10px; border-radius: 5px;">
+    📤 Upload Production Excel
+  </a>
+</div>
+{{ block.super }}
+{% endblock %}

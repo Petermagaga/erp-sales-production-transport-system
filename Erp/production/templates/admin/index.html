@@ -1,0 +1,16 @@
+{% extends "admin/index.html" %}
+{% load static %}
+
+{% block sidebar %}
+{{ block.super }}
+<div class="module">
+    <h3>📦 Production Tools</h3>
+    <ul class="actionlist">
+        <li>
+            <a href="{% url 'admin:upload_excel_admin' %}" style="font-weight:bold;">
+                📤 Import Excel
+            </a>
+        </li>
+    </ul>
+</div>
+{% endblock %}
