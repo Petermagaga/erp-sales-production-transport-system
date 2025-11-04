@@ -17,6 +17,10 @@ urlpatterns = [
     path('api/sales/', include('sales.urls')),
 
     #production
-    path('api/production/', include('production.urls'))
+    path('api/production/', include('production.urls')),
+
+    #transport
+    
+    path('api/transport/',include('transport.urls'))
 
 ]

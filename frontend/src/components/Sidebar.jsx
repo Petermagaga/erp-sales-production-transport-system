@@ -12,6 +12,11 @@ import {
   Scale3DIcon,
   Package,
   ClipboardList,
+  AtomIcon,
+  VoteIcon,
+  DnaIcon,
+  MapIcon,
+  BikeIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -24,12 +29,16 @@ const Sidebar = () => {
     { name: "Sales Records", path: "/sales", icon: BarChart3 },
     { name: "Customers", path: "/customers", icon: Users },
     { name: "Products", path: "/products", icon: ShoppingBag },
-    { name: "Campaigns", path: "/campaigns", icon: Briefcase },
     // From your second sidebar
     { name: "Production List", path: "/production", icon: Package },
     { name: "Production Analytics", path: "/production/analytics", icon: Scale3DIcon },
     // Keep existing analytics last
     { name: "Sales Analytics", path: "/analytics", icon: BarChart3 },
+    {name: "Transport Analytics", path: "/transport/analytics",icon:AtomIcon },
+    {name: "Transport List",path: "/transport/list",icon:VoteIcon},
+    {name: "WarehouseDASHBOARD",path: "/analyticsdashboard",icon:DnaIcon},
+    {name: "WarehouseLayout",path: "/dashboardlay",icon:MapIcon},
+    {name: "Warehouseanalytics",path: "/warehouseanalytics",icon:BikeIcon}
   ];
 
   return (

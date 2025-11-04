@@ -25,7 +25,14 @@ import ProductionList from "./pages/production/ProductionList";
 import AddProduction from "./pages/production/AddProduction";
 import EditProduction from "./pages/production/EditProduction";
 import ProductionAnalytics from "./pages/production/ProductionAnalytics";
-
+import TransportList from "./pages/transport/TransportList";
+import AddTransport from "./pages/transport/AddTransport";
+import TransportAnalytics from "./pages/transport/TransportAnalytics";
+import EditTransport from "./pages/transport/EditTransport";
+import AddWarehouse from "./pages/AddWarehouse";
+import Dashboards from "./pages/warehouse/Dashboards";
+import WarehouseAnalytics from "./pages/warehouse/WarehouseAnalytics";
+import AnalyticsDashboard from "./pages/warehouse/AnalyticsDasboard";
 function App() {
   return (
     <BrowserRouter>
@@ -61,7 +68,18 @@ function App() {
             <Route path="production/add" element={<AddProduction />} />
             <Route path="production/edit/:id" element={<EditProduction />} />
             <Route path="production/analytics" element={<ProductionAnalytics />} />
+            
+            <Route path="transport/list" element={<TransportList />} />
+            <Route path="transport/add" element={<AddTransport />} />
+            <Route path="transport/analytics" element={<TransportAnalytics />} />
+            <Route path="transport/edit/:id" element={<EditTransport />} />
 
+              {/*Warehouse */}
+                       
+            <Route path="/analyticsdashboard" element={<AnalyticsDashboard/>}/>
+            <Route path="/warehouseanalytics"element={<WarehouseAnalytics/>}/>
+            <Route path="/dashboardlay" element={<Dashboards/>}/>
+            <Route path="/addwarehouse" element= {<AddWarehouse/>} />
             {/* Marketing pages */}
             <Route
               path="campaigns"
@@ -85,8 +103,13 @@ function App() {
           hideProgressBar={false}
         />
       </AuthProvider>
+  
     </BrowserRouter>
+
+
+
   );
-}
+};
+
 
 export default App;
