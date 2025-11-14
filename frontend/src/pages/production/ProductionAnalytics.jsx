@@ -26,19 +26,19 @@ const ProductionAnalytics = () => {
       setAnalytics(res.data);
 
       if (res.data && Object.keys(res.data).length > 0) {
-        toast.success("✅ Analytics loaded successfully!", {
+        toast.success("Analytics loaded successfully!", {
           position: "top-right",
           autoClose: 2000,
         });
       } else {
-        toast.info("ℹ️ No analytics data found for selected filters.", {
+        toast.info("No analytics data found for selected filters.", {
           position: "top-right",
           autoClose: 3000,
         });
       }
     } catch (err) {
       console.error("Error fetching analytics:", err);
-      toast.error("❌ Failed to load analytics!", {
+      toast.error("Failed to load analytics!", {
         position: "top-right",
         autoClose: 3000,
       });
@@ -71,104 +71,96 @@ const ProductionAnalytics = () => {
     weekly_trends = [],
   } = analytics || {};
 
-  // ✅ Line Chart — Raw vs Flour Trend (Weekly)
+  // Updated Colors (softer, professional)
   const lineData = {
     labels: weekly_trends.map((t) => t.week_start),
     datasets: [
       {
         label: "Raw Material (Kg)",
         data: weekly_trends.map((t) => t.total_raw),
-        borderColor: "#22C55E",
-        backgroundColor: "rgba(34,197,94,0.2)",
+        borderColor: "#1E88E5",
+        backgroundColor: "rgba(30,136,229,0.12)",
         tension: 0.4,
         borderWidth: 3,
       },
       {
         label: "Flour Output (Kg)",
         data: weekly_trends.map((t) => t.total_flour),
-        borderColor: "#EAB308",
-        backgroundColor: "rgba(250,204,21,0.2)",
+        borderColor: "#F9A825",
+        backgroundColor: "rgba(249,168,37,0.15)",
         tension: 0.4,
         borderWidth: 3,
       },
     ],
   };
 
-  // ✅ Pie Chart — Efficiency vs Waste
   const efficiencyPieData = {
     labels: ["Efficiency (%)", "Waste (%)"],
     datasets: [
       {
         data: [totals.efficiency, totals.waste_ratio],
-        backgroundColor: ["#16A34A", "#DC2626"],
-        hoverBackgroundColor: ["#22C55E", "#EF4444"],
+        backgroundColor: ["#4CAF50", "#FF6B6B"],
+        hoverBackgroundColor: ["#66BB6A", "#FF7F7F"],
         borderWidth: 2,
       },
     ],
   };
 
-  // ✅ Bar Chart — Shift Performance
   const barData = {
     labels: shift_performance.map((s) => s.shift),
     datasets: [
       {
         label: "Efficiency (%)",
         data: shift_performance.map((s) => s.efficiency),
-        backgroundColor: "rgba(34,197,94,0.8)",
+        backgroundColor: "rgba(76,175,80,0.85)",
         borderRadius: 6,
       },
       {
         label: "Waste (%)",
         data: shift_performance.map((s) => s.waste_ratio),
-        backgroundColor: "rgba(234,179,8,0.8)",
+        backgroundColor: "rgba(255,167,38,0.85)",
         borderRadius: 6,
       },
     ],
   };
 
   return (
-    <div className="p-8 bg-gradient-to-br from-green-50 via-white to-yellow-50 min-h-screen">
-      <h2 className="text-3xl font-bold mb-8 text-green-800 tracking-wide">
+    <div className="p-8 bg-gray-50 min-h-screen">
+      <h2 className="text-3xl font-bold mb-8 text-green-800">
         Production Analytics Dashboard
       </h2>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-8 bg-white/90 p-5 rounded-2xl shadow-md border border-green-100">
+      <div className="flex flex-wrap gap-6 mb-8 bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Start Date
-          </label>
+          <label className="block text-sm text-gray-600 mb-1">Start Date</label>
           <input
             type="date"
             name="start_date"
             value={filters.start_date}
             onChange={handleFilterChange}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+            className="border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            End Date
-          </label>
+          <label className="block text-sm text-gray-600 mb-1">End Date</label>
           <input
             type="date"
             name="end_date"
             value={filters.end_date}
             onChange={handleFilterChange}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+            className="border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Shift
-          </label>
+          <label className="block text-sm text-gray-600 mb-1">Shift</label>
           <select
             name="shift"
             value={filters.shift}
             onChange={handleFilterChange}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500"
+            className="border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500"
           >
             {shifts.map((s) => (
               <option key={s}>{s}</option>
@@ -178,33 +170,36 @@ const ProductionAnalytics = () => {
 
         <button
           onClick={handleApplyFilters}
-          className="bg-green-700 text-white px-6 py-2 mt-auto rounded-lg font-medium hover:bg-green-800 transition"
+          className="bg-blue-600 text-white px-6 py-2 mt-auto rounded-xl font-medium hover:bg-blue-700 transition"
         >
           Apply Filters
         </button>
       </div>
 
-      {/* Summary Cards */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <div className="bg-white p-5 rounded-2xl shadow-md border-l-4 border-green-600">
+        <div className="bg-green-50 p-6 rounded-xl shadow-md border border-green-100">
           <p className="text-gray-500 text-sm">Total Raw (Kg)</p>
-          <h3 className="text-2xl font-semibold text-green-700">
+          <h3 className="text-2xl font-semibold text-green-800">
             {totals.total_raw?.toLocaleString()}
           </h3>
         </div>
-        <div className="bg-white p-5 rounded-2xl shadow-md border-l-4 border-yellow-500">
+
+        <div className="bg-yellow-50 p-6 rounded-xl shadow-md border border-yellow-100">
           <p className="text-gray-500 text-sm">Flour Output (Kg)</p>
-          <h3 className="text-2xl font-semibold text-yellow-600">
+          <h3 className="text-2xl font-semibold text-yellow-700">
             {totals.total_flour?.toLocaleString()}
           </h3>
         </div>
-        <div className="bg-white p-5 rounded-2xl shadow-md border-l-4 border-green-500">
+
+        <div className="bg-green-50 p-6 rounded-xl shadow-md border border-green-100">
           <p className="text-gray-500 text-sm">Efficiency (%)</p>
-          <h3 className="text-2xl font-semibold text-green-600">
+          <h3 className="text-2xl font-semibold text-green-700">
             {totals.efficiency}%
           </h3>
         </div>
-        <div className="bg-white p-5 rounded-2xl shadow-md border-l-4 border-red-500">
+
+        <div className="bg-red-50 p-6 rounded-xl shadow-md border border-red-100">
           <p className="text-gray-500 text-sm">Waste (%)</p>
           <h3 className="text-2xl font-semibold text-red-600">
             {totals.waste_ratio}%
@@ -212,17 +207,17 @@ const ProductionAnalytics = () => {
         </div>
       </div>
 
-      {/* Charts Grid */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-5 rounded-2xl shadow-md border border-green-100">
-          <h3 className="text-lg font-semibold mb-3 text-gray-800">
+        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">
             Raw vs Flour Trend
           </h3>
           <Line data={lineData} />
         </div>
 
-        <div className="bg-white p-5 rounded-2xl shadow-md border border-yellow-100">
-          <h3 className="text-lg font-semibold mb-3 text-gray-800">
+        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">
             Efficiency vs Waste
           </h3>
           <Pie data={efficiencyPieData} />
@@ -230,14 +225,13 @@ const ProductionAnalytics = () => {
       </div>
 
       {/* Shift Performance */}
-      <div className="bg-white mt-8 p-5 rounded-2xl shadow-md border border-green-100">
-        <h3 className="text-lg font-semibold mb-3 text-gray-800">
+      <div className="bg-white mt-8 p-6 rounded-xl shadow-md border border-gray-200">
+        <h3 className="text-lg font-semibold mb-4 text-gray-800">
           Shift Performance
         </h3>
         <Bar data={barData} />
       </div>
 
-      {/* Toast Notifications */}
       <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );

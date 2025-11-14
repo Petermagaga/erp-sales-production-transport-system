@@ -4,12 +4,12 @@ from django.db.models import Sum
 from .models import DailyInventory, WarehouseAnalytics
 
 
-def update_warehouse_analytics(warehouse, date):
+def update_warehouse_analytics( date,):
     """
     Helper function to update or create WarehouseAnalytics for a given warehouse and date.
     """
     # Get all inventory entries for that warehouse & date
-    records = DailyInventory.objects.filter(Warehouse=warehouse, date=date)
+    records = DailyInventory.objects.filter( date=date,)
 
     # Aggregate totals
     totals = records.aggregate(
@@ -25,7 +25,7 @@ def update_warehouse_analytics(warehouse, date):
 
     # Update or create analytics record
     analytics, created = WarehouseAnalytics.objects.update_or_create(
-        warehouse=warehouse,
+        
         date=date,
         defaults={
             "total_raw_in": total_raw_in,
@@ -43,7 +43,7 @@ def update_analytics_on_save(sender, instance, **kwargs):
     """
     Trigger analytics update whenever a DailyInventory is created or updated.
     """
-    update_warehouse_analytics(instance.Warehouse, instance.date)
+    update_warehouse_analytics( instance.date,)
 
 
 @receiver(post_delete, sender=DailyInventory)
@@ -51,4 +51,4 @@ def update_analytics_on_delete(sender, instance, **kwargs):
     """
     Trigger analytics recalculation when a DailyInventory is deleted.
     """
-    update_warehouse_analytics(instance.Warehouse, instance.date)
+    update_warehouse_analytics( instance.date,)

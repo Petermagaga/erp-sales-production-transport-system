@@ -2,104 +2,109 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
+user = get_user_model()
 
-user=get_user_model()
+# --- CHOICES ---
 
-CATEGORY_CHOICES=[
-    ("raw", "Raw Material"),
-    ("finished", "Finished Product"),
-    ("byproduct", "By-product"),
+CATEGORY_CHOICES = [
+     
+        ("raw_material", "Raw Material"),
+        ("final_product", "Final Product"),
+        ("by_product", "By-Product"),
+        ("stock_out", "Stock out"),
+        ("Balance_In_Store", "Balance In Store"),
+    ]
+UNIT_CHOICES = [
+    ("kg", "Kilograms"),
+    ("pcs", "Pieces"),
+    ("bag", "Bags"),
 ]
 
-UNIT_CHOICES=[
-    ("kg","Kilograms"),
-    ('pcs',"pieces"),
-    ("bag","Bags"),
-]
-
-SHIFT_CHOICES=[
-    ("shift_1","Shift 1"),
-    ("shift_2","Shift 2"),
-    ("shift_3","Shift 3"),
+SHIFT_CHOICES = [
+    ("shift_1", "Shift 1"),
+    ("shift_2", "Shift 2"),
+    ("shift_3", "Shift 3"),
 ]
 
 
-class Warehouse(models.Model):
-    categories=models.CharField(max_length=100,unique=True)
-    location=models.CharField(max_length=250,blank=True,null=True)
-    
-    def __str__(self):
-        return self.name
-    
+# --- CORE MODELS ---
 
 class Material(models.Model):
     """
-    Represents all items tracked raw finished or byproduct
+    Represents any item tracked — raw, finished, or by-product.
     """
+    name = models.CharField(max_length=200)
+    category = models.CharField(max_length=100, choices=CATEGORY_CHOICES)
+    unit = models.CharField(max_length=10, choices=UNIT_CHOICES, default="kg")
 
-    name=models.CharField(max_length=200)
-    category=models.CharField(max_length=100,choices=CATEGORY_CHOICES)
-    unit=models.CharField(max_length=10,choices=UNIT_CHOICES,default="kg")
+    class Meta:
+        unique_together=('name','category')
+        ordering =['name']
 
     def __str__(self):
-        return f"{self.name} ({self.category})"
-    
+        return f"{self.name} ({self.get_category_display()})"
+
 
 class DailyInventory(models.Model):
     """
-    Records each day stock for a specific product.
-    mirrors your Excel format.
+    Records daily stock levels for a specific material.
+    Auto-calculates closing balance and variance.
     """
-    date=models.DateField(default=timezone.now)
-    warehouse=models.ForeignKey(Warehouse,on_delete=models.CASCADE,related_name="daily_inventory")
-    material=models.ForeignKey(Material,on_delete=models.CASCADE,related_name="daily_records")
+    date = models.DateField(default=timezone.now)
+    material = models.ForeignKey(Material, on_delete=models.CASCADE, related_name="daily_records")
 
-    opening_balance=models.DecimalField(max_digits=14,decimal_places=2,default=0)
-    raw_in =models.DecimalField(max_digits=14,decimal_places=2,default=0,help_text="Raw material received/produced")
-    shift_1=models.DecimalField(max_digits=14,decimal_places=2,default=0)
-    shift_2=models.DecimalField(max_digits=14,decimal_places=2,default=0)
-    shift_3=models.DecimalField(max_digits=14,decimal_places=2,default=0)
-    closing_balance=models.DecimalField(max_digits=14,decimal_places=2,default=0)
+    opening_balance = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    raw_in = models.DecimalField(max_digits=14, decimal_places=2, default=0, help_text="Raw material received/produced")
+    shift_1 = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    shift_2 = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    shift_3 = models.DecimalField(max_digits=14, decimal_places=2, default=0)
 
-    created_at=models.DateTimeField(auto_now_add=True)
+    total_shift_output = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    closing_balance = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    variance = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+
+    remarks = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together=("warehouse","material","date")
-        ordering=["-date"]
+        unique_together = ("material", "date")
+        ordering = ["-date"]
 
-    def calculate_closing(self):
-        used=(self.shift_1 or 0) + (self.shift_2 or 0) +(self.shift_3 or 0)
-        return(self.opening_balance or 0) + (self.raw_in or 0)-used
-    def save(self,*args,**kwargs):
-        self.closing_balance=self.calculate_closing()
-        super().save(*args,**kwargs)
+    def calculate_totals(self):
+        used = (self.shift_1 or 0) + (self.shift_2 or 0) + (self.shift_3 or 0)
+        closing = (self.opening_balance or 0) + (self.raw_in or 0) - used
+        variance = closing - ((self.opening_balance or 0) + (self.raw_in or 0) - used)
+        return used, closing, variance
+
+    def save(self, *args, **kwargs):
+        used, closing, variance = self.calculate_totals()
+        self.total_shift_output = used
+        self.closing_balance = closing
+        self.variance = variance
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.date} | {self.Warehouse.name} | {self.material.name}"
-    
+        return f"{self.date} | {self.material.name}"
 
 
 class WarehouseAnalytics(models.Model):
     """
-    Aggregated analytics per day-helps generate dashboard graphs
+    Daily aggregated analytics for dashboards and reports.
     """
+    date = models.DateField(default=timezone.now, unique=True)
+    total_raw_in = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    total_output = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    total_waste = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    efficiency_rate = models.DecimalField(max_digits=14, decimal_places=2, default=0)
 
-    date=models.DateField(default=timezone.now)
-    warehouse=models.ForeignKey(Warehouse,on_delete=models.CASCADE,related_name="analytics")
-    total_raw_in=models.DecimalField(max_digits=14,decimal_places=2,default=0)
-    total_output=models.DecimalField(max_digits=14,decimal_places=2,default=0)
-    total_waste=models.DecimalField(max_digits=14,decimal_places=2,default=0)
-    efficiency_rate=models.DecimalField(max_digits=14,default=0,decimal_places=2)
+    def calculate_efficiency(self):
+        if self.total_raw_in==0:
+            return 0
+        return (self.total_output / self.total_raw_in * 100) if self.total_raw_in > 0 else 0
 
-    def calculate_effiency(self):
-        if self.total_raw_in>0:
-            return (self.total_output/self.total_raw_in)*100
-        return 0
-    
-    def save(self,*args,**kwargs):
-        self.efficiency_rate=self.calculate_effiency()
-        super().save(*args,**kwargs)
+    def save(self, *args, **kwargs):
+        self.efficiency_rate = self.calculate_efficiency()
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Analytics {self.date} - {self.warehouse.name}"
-    
+        return f"Analytics {self.date}"

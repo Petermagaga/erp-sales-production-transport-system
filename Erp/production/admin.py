@@ -7,6 +7,15 @@ from django.urls import reverse
 from . import views
 from .models import RawMaterial, FlourOutput
 
+
+from django.contrib import admin
+
+
+admin.site.site_header = "Unibrain Industries Administration"
+admin.site.site_title = "Unibrain Admin Portal"
+admin.site.index_title = "Welcome to Unibrain Industries Admin"
+
+
 @admin.register(RawMaterial)
 class RawMaterialAdmin(admin.ModelAdmin):
     list_display = ('date', 'shift', 'maize_kg', 'soya_kg', 'sugar_kg','sorghum_kg','premix_kg','total_raw_material')

@@ -29,7 +29,7 @@ import TransportList from "./pages/transport/TransportList";
 import AddTransport from "./pages/transport/AddTransport";
 import TransportAnalytics from "./pages/transport/TransportAnalytics";
 import EditTransport from "./pages/transport/EditTransport";
-import AddWarehouse from "./pages/AddWarehouse";
+import AddWarehouse from "./pages/warehouse/AddWarehouse";
 import Dashboards from "./pages/warehouse/Dashboards";
 import WarehouseAnalytics from "./pages/warehouse/WarehouseAnalytics";
 import AnalyticsDashboard from "./pages/warehouse/AnalyticsDasboard";

@@ -4,7 +4,7 @@ import API from "axios";
 // Fetch warehouse analytics (by date or all)
 export const fetchWarehouseAnalytics = async (params = {}) => {
   try {
-    const response = await API.get("warehouse-analytics/", { params });
+    const response = await API.get("warehouseanalytics/dashboard/", { params });
     return response.data;
   } catch (error) {
     console.error("Error fetching analytics:", error);

@@ -1,15 +1,20 @@
 from rest_framework.routers import DefaultRouter
+from django.urls import path
 from .views import(
-    WarehouseViewSet,
     MaterialViewSet,
     DailyInventoryViewSet,
-    WarehouseAnalyticsViewSet
+    WarehouseAnalyticsViewSet,
+    inventory_analytics
 )
 router=DefaultRouter()
-router.register("warehouses",WarehouseViewSet)
+\
 router.register("materials",MaterialViewSet)
 router.register("warehouseanalytics",WarehouseAnalyticsViewSet)
 router.register("dailyinventory",DailyInventoryViewSet)
 
 
-urlpatterns =router.urls
+urlpatterns =[ path('inventory/analytics/', inventory_analytics, name='inventory_analytics'),
+              
+              ] 
+
+urlpatterns+= router.urls

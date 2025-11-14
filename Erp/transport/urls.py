@@ -8,5 +8,4 @@ router.register(r'records',TransportRecordViewSet,basename='transpoertrecord')
 
 urlpatterns = [
     path('',include(router.urls)),
-    path('analytics/', TransportRecordViewSet.as_view({'get': 'analytics'}), name='analytics'),
 ]

@@ -1,12 +1,7 @@
 from django.contrib import admin
-from .models import Warehouse, Material, DailyInventory, WarehouseAnalytics
+from .models import  Material, DailyInventory, WarehouseAnalytics
 
 
-@admin.register(Warehouse)
-class WarehouseAdmin(admin.ModelAdmin):
-    list_display = ("categories", "location")
-    search_fields = ("categories", "location")
-    ordering = ("categories",)
 
 
 @admin.register(Material)
@@ -31,7 +26,7 @@ class DailyInventoryAdmin(admin.ModelAdmin):
         "created_at",
     )
     list_filter = ( "material", "date")
-    search_fields = ("material__name", "Warehouse__categories")
+    search_fields = ("material__name", )
     ordering = ("-date",)
 
 
@@ -39,12 +34,11 @@ class DailyInventoryAdmin(admin.ModelAdmin):
 class WarehouseAnalyticsAdmin(admin.ModelAdmin):
     list_display = (
         "date",
-        "warehouse",
         "total_raw_in",
         "total_output",
         "total_waste",
         "efficiency_rate",
     )
-    list_filter = ("warehouse", "date")
+    list_filter = ("total_raw_in", "date")
     search_fields = ("warehouse__categories",)
     ordering = ("-date",)

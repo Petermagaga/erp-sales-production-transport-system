@@ -1,0 +1,45 @@
+/* ================================
+   🌿 Unibrain Custom Green Theme
+   ================================ */
+
+:root {
+    --unibrain-green: #28a745; /* Main Brand Color */
+    --unibrain-green-dark: #1e7e34;
+    --unibrain-green-light: #81c784;
+}
+
+/* Navbar (Top Bar) */
+.navbar-success {
+    background-color: var(--unibrain-green) !important;
+    color: white !important;
+}
+
+/* Sidebar */
+.sidebar-dark-success {
+    background-color: var(--unibrain-green-dark) !important;
+}
+
+/* Buttons */
+.btn-success, .btn-primary {
+    background-color: var(--unibrain-green) !important;
+    border-color: var(--unibrain-green-dark) !important;
+}
+
+.btn-success:hover, .btn-primary:hover {
+    background-color: var(--unibrain-green-dark) !important;
+}
+
+/* Links & accents */
+a {
+    color: var(--unibrain-green) !important;
+}
+
+a:hover {
+    color: var(--unibrain-green-dark) !important;
+}
+
+/* Login page button & accents */
+.login-box .btn-primary {
+    background-color: var(--unibrain-green) !important;
+    border-color: var(--unibrain-green-dark) !important;
+}

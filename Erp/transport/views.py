@@ -7,6 +7,8 @@ from rest_framework.parsers import JSONParser
 from django.utils.dateparse import parse_date
 from datetime import datetime, timedelta
 
+from django.db.models.functions import TruncDay,TruncMonth
+
 from .models import Vehicle, TransportRecord
 from .serializers import VehicleSerializer, TransportRecordSerializer
 
@@ -60,114 +62,101 @@ class TransportRecordViewSet(viewsets.ModelViewSet):
 
         return qs
 
+
     @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
     def analytics(self, request):
-        """
-        Returns cost summary and breakdowns.
-        Query params:
-          - start_date (YYYY-MM-DD)
-          - end_date   (YYYY-MM-DD)
-          - vehicle    (vehicle id) optional
-        """
-        # parse dates; default last 30 days
         start_param = request.query_params.get('start_date')
         end_param = request.query_params.get('end_date')
 
-        if start_param:
-            start_date = parse_date(start_param)
-        else:
-            start_date = (datetime.today() - timedelta(days=30)).date()
+        start_date = parse_date(start_param) if start_param else (datetime.today() - timedelta(days=30)).date()
+        end_date = parse_date(end_param) if end_param else datetime.today().date()
 
-        if end_param:
-            end_date = parse_date(end_param)
-        else:
-            end_date = datetime.today().date()
-
-        # base queryset
         records = TransportRecord.objects.filter(date__range=[start_date, end_date])
 
         vehicle_param = request.query_params.get('vehicle')
         if vehicle_param:
             try:
-                vid = int(vehicle_param)
-                records = records.filter(vehicle__id=vid)
-            except Exception:
+                records = records.filter(vehicle__id=int(vehicle_param))
+            except:
                 pass
 
-        # aggregate totals
+        # Summary totals
         totals = records.aggregate(
             total_fuel=Sum('fuel_cost'),
             total_service=Sum('service_cost'),
         )
-
         total_fuel = float(totals.get('total_fuel') or 0)
         total_service = float(totals.get('total_service') or 0)
-        total_cost = total_fuel + total_service
 
-        # monthly trends using TruncMonth
+        # ✅ Daily trend
+        daily_qs = (
+            records.annotate(day=TruncDay('date'))
+            .values('day')
+            .annotate(
+                fuel=Sum('fuel_cost'),
+                service=Sum('service_cost'),
+            ).order_by('day')
+        )
+
+        daily_data = [
+            {
+                "date": d["day"].strftime("%Y-%m-%d"),
+                "fuel": float(d["fuel"] or 0),
+                "service": float(d["service"] or 0),
+            }
+            for d in daily_qs
+        ]
+
+        # ✅ Monthly trend (existing)
         monthly_qs = (
-            records
-            .annotate(month=TruncMonth('date'))
+            records.annotate(month=TruncMonth('date'))
             .values('month')
             .annotate(
                 month_fuel=Sum('fuel_cost'),
                 month_service=Sum('service_cost'),
-               
-            )
-            .order_by('month')
+            ).order_by('month')
         )
 
-        monthly_trends = []
-        for m in monthly_qs:
-            month_label = m['month'].strftime('%Y-%m')
-            month_fuel = float(m.get('month_fuel') or 0)
-            month_service = float(m.get('month_service') or 0)
-            
-            monthly_trends.append({
-                'month': month_label,
-                'fuel': month_fuel,
-                'service': month_service,
-                'total': month_fuel + month_service ,
-            })
+        monthly_trends = [{
+            "month": m["month"].strftime("%Y-%m"),
+            "fuel": float(m["month_fuel"] or 0),
+            "service": float(m["month_service"] or 0),
+            "total": float(m["month_fuel"] or 0) + float(m["month_service"] or 0),
+        } for m in monthly_qs]
 
-        # per-vehicle totals
+        # ✅ Per vehicle totals + breakdown
         vehicle_qs = (
-            records
-            .values('vehicle__id', 'vehicle__plate_number', 'vehicle__name')
+            records.values('vehicle__id', 'vehicle__plate_number', 'vehicle__name')
             .annotate(
                 fuel_sum=Sum('fuel_cost'),
                 service_sum=Sum('service_cost'),
-                
-            )
-            .order_by('-fuel_sum', '-service_sum')
+            ).order_by('-fuel_sum', '-service_sum')
         )
 
         vehicle_totals = []
         for v in vehicle_qs:
-            fuel_sum = float(v.get('fuel_sum') or 0)
-            service_sum = float(v.get('service_sum') or 0)
+            fuel_sum = float(v["fuel_sum"] or 0)
+            service_sum = float(v["service_sum"] or 0)
             vehicle_totals.append({
-                'vehicle_id': v['vehicle__id'],
-                'plate_number': v['vehicle__plate_number'],
-                'name': v['vehicle__name'],
-                'fuel': fuel_sum,
-                'service': service_sum,
-                'total': fuel_sum + service_sum ,
+                "vehicle_id": v["vehicle__id"],
+                "plate_number": v["vehicle__plate_number"],
+                "name": v["vehicle__name"],
+                "fuel": fuel_sum,
+                "service": service_sum,
+                "total": fuel_sum + service_sum,
             })
 
-        # top vehicles (by total)
-        top_vehicles = sorted(vehicle_totals, key=lambda x: x['total'], reverse=True)[:5]
+        # ✅ Top 5 vehicles
+        top_vehicles = sorted(vehicle_totals, key=lambda x: x["total"], reverse=True)[:5]
 
-        response_data = {
-            'summary': {
-                'total_fuel': total_fuel,
-                'total_service': total_service,
-    
-                'total_cost': total_cost,
+        return Response({
+            "summary": {
+                "total_fuel": total_fuel,
+                "total_service": total_service,
+                "total_cost": total_fuel + total_service,
             },
-            'monthly_trends': monthly_trends,
-            'vehicle_totals': vehicle_totals,
-            'top_vehicles': top_vehicles,
-        }
-
-        return Response(response_data, status=status.HTTP_200_OK)
+            "daily_data": daily_data,          # ✅ NEW
+            "monthly_trends": monthly_trends,
+            "vehicle_totals": vehicle_totals,
+            "top_vehicles": top_vehicles,
+        })

@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
 import API from "../../api/axios";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
 } from "recharts";
 
 const AnalyticsDashboard = () => {
@@ -18,7 +24,9 @@ const AnalyticsDashboard = () => {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await API.get("inventory/analytics/", { params: filters });
+      const response = await API.get("inventory/analytics/", {
+        params: filters,
+      });
       setData(response.data);
     } catch (error) {
       console.error("Error fetching analytics:", error);
@@ -36,11 +44,12 @@ const AnalyticsDashboard = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* 🔹 Title & Inline Filters */}
+      {/* Header & Filters */}
       <div className="flex flex-wrap justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">
           📈 Inventory Analytics
         </h2>
+
         <div className="flex flex-wrap gap-3 items-center">
           <input
             type="date"
@@ -49,6 +58,7 @@ const AnalyticsDashboard = () => {
             onChange={handleFilterChange}
             className="border rounded-lg px-3 py-1 text-sm"
           />
+
           <input
             type="date"
             name="end_date"
@@ -56,6 +66,7 @@ const AnalyticsDashboard = () => {
             onChange={handleFilterChange}
             className="border rounded-lg px-3 py-1 text-sm"
           />
+
           <select
             name="category"
             value={filters.category}
@@ -67,28 +78,45 @@ const AnalyticsDashboard = () => {
             <option value="finished">Finished Products</option>
             <option value="byproduct">Byproducts</option>
           </select>
+
           <button
             onClick={handleApplyFilters}
-            className="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700"
+            className="bg-green-600 text-white px-4 py-1.5 rounded-lg hover:bg-green-700"
           >
             Apply
           </button>
         </div>
       </div>
 
-      {/* 🔹 Charts Section */}
+      {/* Chart Card */}
       <div className="bg-white shadow rounded-2xl p-6">
         <h3 className="text-lg font-semibold mb-4 text-gray-700">
           Total Movement Summary
         </h3>
+
         <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+          <BarChart
+            data={data}
+            margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+          >
             <CartesianGrid strokeDasharray="3 3" />
+
             <XAxis dataKey="product__name" />
             <YAxis />
             <Tooltip />
-            <Bar dataKey="total_in" fill="#34d399" name="Total In" />
-            <Bar dataKey="total_out" fill="#60a5fa" name="Total Out" />
+
+            {/* Updated Colors */}
+            <Bar
+              dataKey="total_in"
+              fill="#16a34a"       // Company Green
+              name="Total In"
+            />
+
+            <Bar
+              dataKey="total_out"
+              fill="#facc15"       // Yellow / Gold Brand Color
+              name="Total Out"
+            />
           </BarChart>
         </ResponsiveContainer>
       </div>
