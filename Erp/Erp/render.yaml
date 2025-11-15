@@ -4,11 +4,14 @@ services:
     env: python
     plan: free
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn your_project_name.wsgi"
+    startCommand: "gunicorn Erp.wsgi:application"
     envVars:
+      - key: RENDER
+        value: "true"
       - key: DATABASE_URL
-        fromDatabase: true
-        name: postgres-db
+        fromDatabase:
+          name: postgres-db
+          property: connectionString
       - key: PYTHON_VERSION
         value: "3.10"
 

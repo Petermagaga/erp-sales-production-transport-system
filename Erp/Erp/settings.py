@@ -2,11 +2,18 @@ from decouple import config
 from pathlib import Path
 from datetime import timedelta
 import os
+import dj_database_url
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config("SECRET_KEY", default="django-insecure-dev-key")
-DEBUG = True
-ALLOWED_HOSTS = ["*"]
+
+DEBUG = config("DEBUG", default=True, cast=bool)
+
+ALLOWED_HOSTS = [
+    "*",
+    config("RENDER_EXTERNAL_HOSTNAME", default=""),
+]
 
 INSTALLED_APPS = [
     'jazzmin',
@@ -17,14 +24,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # Third-party
     'django_filters',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework.authtoken',
     'corsheaders',
 
-    # Local apps
     'sales',
     'accounts',
     'production',
@@ -44,30 +49,32 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = [
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = [
     "https://erpUnibrain.com",
 ]
-# ✅ Use your custom user model
+
 AUTH_USER_MODEL = 'accounts.User'
 
 ROOT_URLCONF = 'Erp.urls'
 
-
-# ✅ Django REST Framework
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
-    
-    'DEFAULT_FILTER_BACKENDS': [
-        'django_filters.rest_framework.DjangoFilterBackend',
-        'rest_framework.filters.SearchFilter',
-        'rest_framework.filters.OrderingFilter',
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
     ],
 }
 
-# ✅ Simple JWT config
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -78,52 +85,37 @@ SIMPLE_JWT = {
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
 
-# ✅ Authentication tweaks
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-# ✅ Optional but recommended: make login via email consistent everywhere
-# It tells Django that `User` uses email as the login field.
-# (only needed if you’ve customized USERNAME_FIELD in the model)
-# Example:
-# USERNAME_FIELD = 'email'  ← Add this inside your User model
-
-# Database (unchanged)
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME", default="unibrain_erm"),
-        "USER": config("DB_USER", default="unibrain_admin"),
-        "PASSWORD": config("DB_PASS", default="adminunibrain"),
-        "HOST": config("DB_HOST", default="localhost"),
-        "PORT": config("DB_PORT", default="5432"),
+if config("RENDER", default=False, cast=bool):
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=config("DATABASE_URL"),
+            conn_max_age=600,
+            ssl_require=True
+        )
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": config("DB_NAME", default="unibrain_erm"),
+            "USER": config("DB_USER", default="unibrain_admin"),
+            "PASSWORD": config("DB_PASS", default="adminunibrain"),
+            "HOST": config("DB_HOST", default="localhost"),
+            "PORT": config("DB_PORT", default="5432"),
+        }
+    }
 
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # optional, but safe to include
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
-
-
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')    
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 
 JAZZMIN_SETTINGS = {
     "site_title": "Unibrain ERP Admin",
