@@ -2,7 +2,8 @@ from decouple import config
 from pathlib import Path
 from datetime import timedelta
 import os
-import dj_database_url
+import dj-database-url
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
