@@ -67,7 +67,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ],
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
@@ -95,7 +95,7 @@ if config("RENDER", default=False, cast=bool):
         "default": dj_database_url.config(
             default=config("DATABASE_URL"),
             conn_max_age=600,
-            ssl_require=True
+            ssl_require=False
         )
     }
 else:
