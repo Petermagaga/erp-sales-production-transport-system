@@ -18,7 +18,7 @@ import AddSale from "./pages/sales/AddSale";
 import EditSale from "./pages/sales/EditSale";
 import ViewSale from "./pages/sales/ViewSale";
 import Products from "./pages/Products";
-import Campaigns from "./pages/Campaigns";
+import Campaigns from "./pages/campaigns";
 import CustomersList from "./pages/CustomersList";
 import SalesAnalytics from "./pages/analytics/SalesAnalytics";
 import ProductionList from "./pages/production/ProductionList";
