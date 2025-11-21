@@ -18,7 +18,7 @@ const Login = () => {
 
     if (username === "admin" && password === "1234") {
       // Fake token, fake user, anything you want
-      loginUser("admin", "mock-token-1234");
+      loginUser("admin", "1234");
       navigate("/");
       setLoading(false);
       return;

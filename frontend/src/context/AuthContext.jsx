@@ -14,30 +14,53 @@ export const AuthProvider = ({ children }) => {
         }
       : null
   );
+
   const [user, setUser] = useState(() =>
     localStorage.getItem("access")
       ? jwtDecode(localStorage.getItem("access"))
       : null
   );
 
-  // ✅ LOGIN USER
+  // ⭐ MOCK ACCOUNT (Option A)
+  const MOCK_USERNAME = "admin";
+  const MOCK_PASSWORD = "1234";
+
+  // ----------------------------------------------
+  // LOGIN USER
+  // ----------------------------------------------
   const loginUser = async (username, password) => {
+    // ⭐ MOCK LOGIN (no backend needed)
+    if (username === MOCK_USERNAME && password === MOCK_PASSWORD) {
+      const fakeToken = "mock-token-123456";
+      localStorage.setItem("access", fakeToken);
+      localStorage.setItem("refresh", fakeToken);
+
+      setAuthTokens({ access: fakeToken, refresh: fakeToken });
+      setUser({ username: "mock_admin" });
+
+      return { mock: true };
+    }
+
+    // ⭐ REAL BACKEND LOGIN
     const res = await API.post("token/", { username, password });
     const data = res.data;
 
     localStorage.setItem("access", data.access);
     localStorage.setItem("refresh", data.refresh);
+
     setAuthTokens({ access: data.access, refresh: data.refresh });
     setUser(data.user || jwtDecode(data.access));
+
+    return data;
   };
 
-  // ✅ REGISTER USER
+  // REGISTER USER
   const registerUser = async (registerData) => {
     const res = await API.post("accounts/register/", registerData);
     return res.data;
   };
 
-  // ✅ LOGOUT USER
+  // LOGOUT USER
   const logoutUser = () => {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
@@ -45,17 +68,22 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  // ✅ AUTO TOKEN REFRESH
+  // AUTO REFRESH TOKEN
   const updateToken = async () => {
     if (!authTokens?.refresh) return;
+
+    // Skip refresh for mock account
+    if (authTokens.access === "mock-token-123456") return;
 
     try {
       const res = await API.post("token/refresh/", {
         refresh: authTokens.refresh,
       });
+
       localStorage.setItem("access", res.data.access);
       setAuthTokens((prev) => ({ ...prev, access: res.data.access }));
       setUser(jwtDecode(res.data.access));
+
     } catch (error) {
       logoutUser();
     }
@@ -63,7 +91,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (authTokens) {
-      const interval = setInterval(() => updateToken(), 1000 * 60 * 10); // every 10 minutes
+      const interval = setInterval(() => updateToken(), 1000 * 60 * 10);
       return () => clearInterval(interval);
     }
   }, [authTokens]);
