@@ -50,14 +50,13 @@ class Customer(TimeStampedModel):
 class Product(TimeStampedModel):
     """Product catalog."""
     name = models.CharField(max_length=100)
-    sku = models.CharField(max_length=50, unique=True)
     category = models.CharField(max_length=100, blank=True, null=True)
     unit = models.CharField(max_length=20, default='pcs')
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.name} ({self.sku})"
+        return f"{self.name}"
 
 
 class Batch(TimeStampedModel):
@@ -79,17 +78,24 @@ class Sale(TimeStampedModel):
     salesperson = models.ForeignKey(Salesperson, on_delete=models.SET_NULL, null=True, related_name='sales')
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, related_name='sales')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, related_name='sales')
-    batch_number = models.CharField(max_length=50, blank=True, null=True)
+    batch_number = models.ForeignKey(Batch ,blank=True, null=True,on_delete=models.SET_NULL,related_name="sales")
     quantity = models.PositiveIntegerField(default=1)
+
+    # Auto-filled fields
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+
     location = models.CharField(max_length=100, blank=True, null=True)
 
     def save(self, *args, **kwargs):
-        if not self.total_amount:
-            self.total_amount = self.quantity * self.unit_price
-        super().save(*args, **kwargs)
+        # 1️⃣ Copy price automatically from Product
+        if self.product:
+            self.unit_price = self.product.unit_price
 
+        # 2️⃣ Auto calculate total
+        self.total_amount = self.quantity * self.unit_price
+
+        super().save(*args, **kwargs)
 
 # ================================
 # 4️⃣  MARKETING & FEEDBACK
@@ -131,7 +137,7 @@ class Complaint(TimeStampedModel):
 
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, related_name='complaints')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, related_name='complaints')
-    batch_number = models.CharField(max_length=50, blank=True, null=True)
+    batch_number = models.ForeignKey(Batch, blank=True, null=True,on_delete=models.SET_NULL,related_name="complaints")
     description = models.TextField()
     effect_assessed = models.TextField(blank=True, null=True)
     resolution = models.TextField(blank=True, null=True)
@@ -143,10 +149,11 @@ class Complaint(TimeStampedModel):
 
 
 class ProductRecall(TimeStampedModel):
-    """Logs all product recalls and monetary resolutions."""
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, related_name='recalls')
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, related_name='recalls')
-    batch_number = models.CharField(max_length=50)
+
+    batch = models.ForeignKey(Batch, on_delete=models.SET_NULL, null=True, blank=True, related_name='recalls')
+
     quantity_recalled = models.PositiveIntegerField()
     amount_value = models.DecimalField(max_digits=12, decimal_places=2)
     recall_reason = models.TextField(blank=True, null=True)
@@ -155,7 +162,12 @@ class ProductRecall(TimeStampedModel):
     recall_date = models.DateField(default=timezone.now)
     resolved_date = models.DateField(blank=True, null=True)
 
+    def save(self, *args, **kwargs):
+        # Auto-calculate amount_value = product.price * quantity_recalled
+        if self.product and self.quantity_recalled:
+            self.amount_value = self.product.price * self.quantity_recalled
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"Recall {self.product.name} - {self.batch_number}"
-
-
+        return f"Recall {self.product.name} - Batch {self.batch}"

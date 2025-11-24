@@ -4,7 +4,7 @@ import axios from "axios";
 const API_BASE_URL =
   window.location.hostname === "localhost"
     ? "http://127.0.0.1:8000/api/"
-    : "https://unibrainerps.onrender.com/api";   // <- change this once
+    : "https://rica-native-demand-determined.trycloudflare.com/api/";   // <- change this once
 
 const API = axios.create({
   baseURL: API_BASE_URL,
