@@ -8,7 +8,9 @@ const ViewSale = () => {
   const [sale, setSale] = useState(null);
 
   useEffect(() => {
-    axios.get(`/api/sales/${id}/`)
+    axios.get(`/sales/${id}/`, {
+  headers: { Authorization: `Bearer ${authTokens?.access}` }
+})
       .then(res => setSale(res.data))
       .catch(err => console.error(err));
   }, [id]);
@@ -22,7 +24,7 @@ const ViewSale = () => {
         <p><strong>Customer:</strong> {sale.customer}</p>
         <p><strong>Product:</strong> {sale.product}</p>
         <p><strong>Quantity:</strong> {sale.quantity}</p>
-        <p><strong>Total Price:</strong> KES {sale.total_price}</p>
+        <p><strong>Total Price:</strong> KES {sale.total_amount}</p>
         <p><strong>Date:</strong> {new Date(sale.date).toLocaleDateString()}</p>
       </div>
       <div className="mt-4 flex space-x-3">

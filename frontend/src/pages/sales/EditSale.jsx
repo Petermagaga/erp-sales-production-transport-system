@@ -4,6 +4,7 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 
 const EditSale = () => {
+  const {authTokens} = useContext(AuthContext);
   const { id } = useParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -15,7 +16,7 @@ const EditSale = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get(`/api/sales/${id}/`)
+    axios.get(`/sales/${id}/`)
       .then(res => {
         setFormData(res.data);
         setLoading(false);

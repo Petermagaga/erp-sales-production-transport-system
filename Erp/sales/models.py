@@ -131,7 +131,9 @@ class Complaint(TimeStampedModel):
     """Tracks customer complaints and resolutions."""
     STATUS_CHOICES = [
         ('open', 'Open'),
+        
         ('pending', 'Pending'),
+
         ('closed', 'Closed'),
     ]
 

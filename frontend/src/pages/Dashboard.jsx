@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
+import { AuthContext } from "../context/AuthContext";
 import {
   LineChart,
   Line,
@@ -16,6 +17,8 @@ import { motion } from "framer-motion";
 import { TrendingUp, BarChart3, Package } from "lucide-react";
 
 const SalesDashboard = () => {
+  const {authTokens} = useContext(AuthContext);
+
   const [analytics, setAnalytics] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
   const [regions, setRegions] = useState([]);
@@ -28,7 +31,7 @@ const SalesDashboard = () => {
 
   const fetchAnalytics = async () => {
     try {
-      const res = await axios.get("/api/sales/analytics/", {
+      const res = await axios.get("/sales/analytics/", {
         params: {
           start_date: startDate,
           end_date: endDate,
@@ -36,6 +39,7 @@ const SalesDashboard = () => {
           region: selectedRegion,
           sales_rep: selectedRep,
         },
+        headers: { Authorization: `Bearer ${authTokens?.access}` }
       });
       setAnalytics(res.data.analytics || []);
       setTopProducts(res.data.top_products || []);
@@ -47,8 +51,8 @@ const SalesDashboard = () => {
   const fetchFilters = async () => {
     try {
       const [regionRes, repRes] = await Promise.all([
-        axios.get("/api/regions/"),
-        axios.get("/api/sales-officers/"),
+        axios.get("/regions/"),
+        axios.get("/sales-officers/"),
       ]);
       setRegions(regionRes.data.regions || regionRes.data || []);
       setSalesReps(repRes.data.reps || repRes.data || []);

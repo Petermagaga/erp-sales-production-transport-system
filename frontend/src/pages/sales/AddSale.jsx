@@ -25,12 +25,13 @@ const AddSale = () => {
       try {
         setLoading(true);
         const [customersRes, productsRes, salesRes] = await Promise.all([
-          axios.get("/api/sales/customers/"),
-          axios.get("/api/sales/products/"),
-          axios.get("/api/sales/salespersons/"),
+          axios.get("/sales/customers/"),
+          axios.get("/sales/products/"),
+          axios.get("/sales/salespersons/"),
         ]);
 
         const normalize = (data) =>
+          
           Array.isArray(data) ? data : data.results || [];
 
         setCustomers(normalize(customersRes.data));

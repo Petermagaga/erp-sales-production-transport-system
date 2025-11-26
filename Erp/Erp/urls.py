@@ -22,6 +22,6 @@ urlpatterns = [
     #transport
     
     path('api/transport/',include('transport.urls')),
-    path("api/",include('warehouse.urls')),
+    path("api/warehouse/",include('warehouse.urls')),
 
 ]

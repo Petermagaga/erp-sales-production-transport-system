@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect, useState, useContext } from "react";
+import API from "../../api/axios";
+import { AuthContext } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
 import { ShoppingCart, Eye, Edit3, PlusCircle } from "lucide-react";
 
 const SalesList = () => {
+  const {authTokens} = useContext(AuthContext);
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -11,7 +13,10 @@ const SalesList = () => {
     const fetchSales = async () => {
       setLoading(true);
       try {
-        const res = await axios.get("http://127.0.0.1:8000/api/sales/");
+        const res = await API.get("sales/sales/", {
+          headers: { Authorization: `Bearer ${authTokens?.access}` },
+        });
+
         const data = Array.isArray(res.data) ? res.data : res.data.results;
         setSales(data || []);
       } catch (error) {
@@ -23,6 +28,7 @@ const SalesList = () => {
     };
     fetchSales();
   }, []);
+
 
   return (
     <div className="p-6 bg-gradient-to-br from-emerald-50 to-green-100 min-h-screen">
@@ -72,10 +78,10 @@ const SalesList = () => {
                     index % 2 === 0 ? "bg-gray-50" : "bg-white"
                   }`}
                 >
-                  <td className="py-3 px-4 border-b">{s.customer_name}</td>
-                  <td className="py-3 px-4 border-b">{s.product_name}</td>
+                  <td className="py-3 px-4 border-b">{s.customer?.name}</td>
+                  <td className="py-3 px-4 border-b">{s.product?.name}</td>
                   <td className="py-3 px-4 border-b font-semibold text-emerald-700">
-                    ${s.amount}
+                    ${s.total_amount}
                   </td>
                   <td className="py-3 px-4 border-b">{s.date}</td>
                   <td className="py-3 px-4 border-b text-center">
