@@ -6,7 +6,8 @@ from rest_framework.permissions import AllowAny
 from django.db.models import Sum,Count
 from django_filters.rest_framework import DjangoFilterBackend
 from datetime import datetime,timedelta
-
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 from rest_framework.views import APIView
 from .filters import SaleFilter
 from .models import (
@@ -143,90 +144,91 @@ class ProductRecallViewSet(viewsets.ModelViewSet):
 
 class SalesRegionsView(APIView):
     def get(self, request):
-        regions = Sale.objects.values_list("region", flat=True).distinct()
+        regions = Sale.objects.values_list("location", flat=True).distinct()
         return Response([{"id": i, "name": r} for i, r in enumerate(regions, 1)])
 
 
 
 
 from django.db.models.functions import TruncWeek, TruncMonth, TruncYear
-
+@method_decorator(cache_page(60 * 15), name="dispatch")
 class AnalyticsView(APIView):
     def get(self, request):
-        # 🧩 Extract filters
         region = request.GET.get("region")
         sales_rep = request.GET.get("sales_rep")
         filter_type = request.GET.get("filter_type", "monthly")
+
         start_date = parse_date(request.GET.get("start_date")) or (datetime.today() - timedelta(days=30))
         end_date = parse_date(request.GET.get("end_date")) or datetime.today()
 
-        # 🔍 Base queryset
         sales = Sale.objects.filter(date__range=[start_date, end_date])
 
-        if region and region.lower() != "all":
+        # Fix filters
+        if region:
             sales = sales.filter(region__iexact=region)
 
-        if sales_rep and sales_rep.lower() != "all":
-            sales = sales.filter(sales_officer__id=sales_rep)
+        if sales_rep:
+            sales = sales.filter(salesperson__id=sales_rep)
 
-        # 📊 Grouping logic
+        # Grouping
         if filter_type == "weekly":
-            sales_grouped = (
-                sales.annotate(period=TruncWeek("date"))
-                .values("period")
-                .annotate(total_sales=Count("id"), total_revenue=Sum("amount"))
-                .order_by("period")
-            )
+            grouped = sales.annotate(period=TruncWeek("date"))
         elif filter_type == "yearly":
-            sales_grouped = (
-                sales.annotate(period=TruncYear("date"))
-                .values("period")
-                .annotate(total_sales=Count("id"), total_revenue=Sum("amount"))
-                .order_by("period")
-            )
-        else:  # default monthly
-            sales_grouped = (
-                sales.annotate(period=TruncMonth("date"))
-                .values("period")
-                .annotate(total_sales=Count("id"), total_revenue=Sum("amount"))
-                .order_by("period")
-            )
+            grouped = sales.annotate(period=TruncYear("date"))
+        else:
+            grouped = sales.annotate(period=TruncMonth("date"))
 
-        # 🧮 Summary
-        total_sales = sales.count()
-        total_revenue = sales.aggregate(Sum("amount"))["amount__sum"] or 0
-        avg_sale = total_revenue / total_sales if total_sales > 0 else 0
-
-        # 🏆 Top Products
-        top_products = (
-            sales.values("product__name")
-            .annotate(quantity_sold=Count("id"), revenue=Sum("amount"))
-            .order_by("-revenue")[:5]
+        grouped = (
+            grouped.values("period")
+            .annotate(
+                total_sales=Count("id"),
+                total_revenue=Sum("amount"),
+            )
+            .order_by("period")
         )
 
-        # ✅ Response structure
-        data = {
+        analytics = []
+        for d in grouped:
+            period = d["period"]
+            if filter_type == "weekly":
+                period_str = period.strftime("%Y-W%W")
+            elif filter_type == "yearly":
+                period_str = period.strftime("%Y")
+            else:
+                period_str = period.strftime("%b %Y")
+
+            analytics.append({
+                "period": period_str,
+                "total_sales": d["total_sales"],
+                "total_revenue": d["total_revenue"] or 0,
+            })
+
+        # Summary
+        total_sales = sales.count()
+        total_revenue = sales.aggregate(Sum("total_amount"))["total_amount__sum"] or 0
+        avg_sale = round(total_revenue / total_sales, 2) if total_sales else 0
+
+        # Top products
+        top_products = sales.values("product__name").annotate(
+            quantity_sold=Count("id"),
+            revenue=Sum("amount")
+        ).order_by("-revenue")[:5]
+
+        top_products_formatted = [
+            {
+                "product_name": p["product__name"],
+                "quantity_sold": p["quantity_sold"],
+                "revenue": p["revenue"] or 0
+            }
+            for p in top_products
+        ]
+
+        return Response({
             "summary": {
                 "total_sales": total_sales,
-                "total_revenue": round(total_revenue, 2),
-                "avg_sale": round(avg_sale, 2),
+                "total_revenue": total_revenue,
+                "avg_sale": avg_sale,
             },
-            "analytics": [
-                {
-                    "period": d["period"].strftime("%b %Y" if filter_type == "monthly" else "%Y-%W" if filter_type == "weekly" else "%Y"),
-                    "total_sales": d["total_sales"],
-                    "total_revenue": round(d["total_revenue"] or 0, 2),
-                }
-                for d in sales_grouped
-            ],
-            "top_products": [
-                {
-                    "product_name": p["product__name"],
-                    "quantity_sold": p["quantity_sold"],
-                    "revenue": round(p["revenue"], 2),
-                }
-                for p in top_products
-            ],
-        }
-
-        return Response(data)
+            "analytics": analytics,
+            "top_products": top_products_formatted,
+        })
