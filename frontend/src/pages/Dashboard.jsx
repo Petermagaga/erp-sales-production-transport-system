@@ -38,7 +38,7 @@ const SalesDashboard = () => {
   -------------------------------------------------------------*/
   const fetchAnalytics = useCallback(async () => {
     try {
-      const res = await API.get("sales/analytics/sales/", {
+      const res = await API.get("sales/analytics/sales", {
         params: {
           start_date: startDate || undefined,
           end_date: endDate || undefined,
@@ -67,7 +67,8 @@ const SalesDashboard = () => {
       ]);
 
       setRegions(regionRes.data.regions ?? []);
-      setSalesReps(repRes.data ?? []);
+      setSalesReps(repRes.data.reps ?? []);
+
     } catch (err) {
       console.error("Error fetching filters ➜", err.message);
     }

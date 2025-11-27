@@ -158,8 +158,11 @@ class AnalyticsView(APIView):
         sales_rep = request.GET.get("sales_rep")
         filter_type = request.GET.get("filter_type", "monthly")
 
-        start_date = parse_date(request.GET.get("start_date")) or (datetime.today() - timedelta(days=30))
-        end_date = parse_date(request.GET.get("end_date")) or datetime.today()
+        raw_start = request.GET.get("start_date")
+        raw_end = request.GET.get("end_date")
+
+        start_date = parse_date(raw_start) if raw_start else (datetime.today() - timedelta(days=30))
+        end_date = parse_date(raw_end) if raw_end else datetime.today()
 
         sales = Sale.objects.filter(date__range=[start_date, end_date])
 
@@ -182,7 +185,7 @@ class AnalyticsView(APIView):
             grouped.values("period")
             .annotate(
                 total_sales=Count("id"),
-                total_revenue=Sum("amount"),
+                total_revenue=Sum("total_amount"),
             )
             .order_by("period")
         )
@@ -211,7 +214,7 @@ class AnalyticsView(APIView):
         # Top products
         top_products = sales.values("product__name").annotate(
             quantity_sold=Count("id"),
-            revenue=Sum("amount")
+            revenue=Sum("total_amount")
         ).order_by("-revenue")[:5]
 
         top_products_formatted = [

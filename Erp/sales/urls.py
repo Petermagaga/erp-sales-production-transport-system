@@ -22,6 +22,6 @@ urlpatterns = [
     path('', include(router.urls)),
 
     # ANALYTICS ENDPOINTS
-    path("analytics/sales", AnalyticsView.as_view(), name="sales-analytics"),
+    path("analytics/sales/", AnalyticsView.as_view(), name="sales-analytics"),
     path("analytics/regions/", SalesRegionsView.as_view(), name="regions"),
 ]

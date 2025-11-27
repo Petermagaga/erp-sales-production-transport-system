@@ -24,7 +24,7 @@ useEffect(() => {
   const fetchFilters = async () => {
     try {
       const [regionsRes, repsRes] = await Promise.all([
-        API.get("sales/sales/regions/"),
+        API.get("sales/analytics/regions/"),
         API.get("/sales/reps/"),
       ]);
 
