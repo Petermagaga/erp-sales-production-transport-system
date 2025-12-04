@@ -173,11 +173,13 @@ const Analysis = () => {
   const { summary, daily_data, monthly_trends, top_vehicles } = analytics;
 
   return (
-    <div className="p-6 bg-gradient-to-b from-[#a3e635] to-[#bef264] min-h-screen text-slate-900">
+    <div className="p-6 min-h-screen bg-[#0F172A] text-slate-100">
+
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Fleet Executive Dashboard</h1>
+          <h1 className="text-3xl font-bold">Unibrain Vehicles Dashboard</h1>
           <p className="text-sm text-slate-800">Executive summary & insights</p>
         </div>
 

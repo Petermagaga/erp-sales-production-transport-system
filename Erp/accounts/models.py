@@ -1,20 +1,43 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser,Group,Permission
 from django.db import models
 
 class User(AbstractUser):
-    ROLE_CHOICES = (
-        ('admin', 'Admin'),
-        ('sales', 'Sales'),
-        ('marketing', 'Marketing'),
+    ROLE_CHOICES= (
+        ('admin','Admin'),
+        ('transporter','Transporter'),
+        ('warehouse','Warehouse'),
+        ('sales','Sales'),
+        ('marketing','Marketing'),
     )
-    role = models.CharField(max_length=30, choices=ROLE_CHOICES, default='sales')
-    phone = models.CharField(max_length=20, blank=True, null=True)
 
+    DEPARTMENT=(
+        ('administration',"Administration"),
+        ('field','Field'),
+        ('warehousing','Warehousing'),
+        ('transport','Transport'),
+    )
+
+    role=models.CharField(max_length=30,choices=ROLE_CHOICES,default='sales')
+    phone=models.CharField(max_length=34,blank=True,null=True),
+
+    department=models.CharField(max_length=20,choices=DEPARTMENT,default='field'),
+    created_at=models.DateTimeField(auto_now_add=True),
+    updated_at=models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.username} ({self.role})"
+    
     def is_admin(self):
-        return self.role == 'admin' or self.is_superuser
-
+        return self.role=='admin' or self.is_superuser
+    
     def is_sales(self):
-        return self.role == 'sales'
-
+        return self.role=='sales'
+    
+    def is_transport(self):
+        return self.role=="transporter"
+    
+    def is_warehouse(self):
+        return self.role=="warehouse"
+    
     def is_marketing(self):
-        return self.role == 'marketing'
+        return self.role=="marketing"
