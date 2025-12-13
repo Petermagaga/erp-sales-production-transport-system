@@ -1,35 +1,42 @@
-from rest_framework import permissions
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
-class IsAdmin(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.is_admin())
-
-class IsSales(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.is_sales())
-
-class IsMarketing(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.is_marketing())
-
-class IsAdminOrReadOnly(permissions.BasePermission):
+class ModulePermission(BasePermission):
     """
-    Allow full access for admin; read-only for others.
+    Hybrid Permission:
+    - Admin: full access everywhere
+    - Role-based access inside module
+    - Read-only outside own module
     """
+
+    MODULE_ROLES = {
+        "transport": ["admin", "transporter"],
+        "warehouse": ["admin", "warehouse"],
+        "sales": ["admin", "sales"],
+        "marketing": ["admin", "marketing"],
+    }
+
     def has_permission(self, request, view):
-        if request.method in permissions.SAFE_METHODS:
+        user = request.user
+
+        # Must be authenticated
+        if not user or user.is_anonymous:
+            return False
+
+        # Admin bypasses restrictions
+        if user.is_superuser or user.role == "admin":
             return True
-        return bool(request.user and request.user.is_authenticated and request.user.is_admin())
 
-class IsAdminOrSales(permissions.BasePermission):
-    def has_permission(self, request, view):
-        if not request.user or not request.user.is_authenticated:
+        # View must set a module_name e.g. "sales"
+        module = getattr(view, "module_name", None)
+        if not module:
             return False
-        return request.user.is_admin() or request.user.is_sales()
 
-class IsAdminOrMarketing(permissions.BasePermission):
-    def has_permission(self, request, view):
-        if not request.user or not request.user.is_authenticated:
-            return False
-        return request.user.is_admin() or request.user.is_marketing()
+        # Roles allowed to fully modify this module
+        allowed_roles = self.MODULE_ROLES.get(module, [])
 
+        # Allow read-only access for everyone
+        if request.method in SAFE_METHODS:
+            return True
+
+        # Only module owners can write
+        return user.role in allowed_roles
