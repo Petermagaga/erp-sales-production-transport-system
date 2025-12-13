@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser,Group,Permission
 from django.db import models
+from django.conf import settings
 
 class User(AbstractUser):
     ROLE_CHOICES= (
@@ -41,3 +42,15 @@ class User(AbstractUser):
     
     def is_marketing(self):
         return self.role=="marketing"
+    
+class AuditLog(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True)
+    module=models.CharField(max_length=50)
+    action=models.CharField(max_length=20)
+    object_name=models.CharField(max_length=100)
+    object_id=models.PositiveIntegerField(null=True,blank=True)
+    ip_address=models.GenericIPAddressField(null=True)
+    created_at=models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.User} {self.action} {self.module}"

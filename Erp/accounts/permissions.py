@@ -38,5 +38,7 @@ class ModulePermission(BasePermission):
         if request.method in SAFE_METHODS:
             return True
 
+        if request.method == "DELETE" and user.role != "admin":
+            return False
         # Only module owners can write
         return user.role in allowed_roles
