@@ -44,13 +44,34 @@ class User(AbstractUser):
         return self.role=="marketing"
     
 class AuditLog(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True)
-    module=models.CharField(max_length=50)
-    action=models.CharField(max_length=20)
-    object_name=models.CharField(max_length=100)
-    object_id=models.PositiveIntegerField(null=True,blank=True)
-    ip_address=models.GenericIPAddressField(null=True)
-    created_at=models.DateTimeField(auto_now_add=True)
+    ACTIONS = (
+        ("CREATE", "CREATE"),
+        ("UPDATE", "UPDATE"),
+        ("DELETE", "DELETE"),
+        ("LOGIN", "LOGIN"),
+        ("LOGOUT", "LOGOUT"),
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    module = models.CharField(max_length=50)
+    model_name = models.CharField(max_length=100)
+    object_id = models.CharField(max_length=50, null=True, blank=True)
+
+    action = models.CharField(max_length=20, choices=ACTIONS)
+
+    old_data = models.JSONField(null=True, blank=True)
+    new_data = models.JSONField(null=True, blank=True)
+
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.User} {self.action} {self.module}"
+        return f"{self.user} {self.action} {self.model_name} ({self.object_id})"

@@ -58,7 +58,7 @@ class TransportRecordViewSet(viewsets.ModelViewSet):
     
     @action(
         detail=False,
-        method=['get'],
+        methods=['get'],
         permission_classes=[ModulePermission]
     )
 

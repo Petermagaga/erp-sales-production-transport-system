@@ -13,6 +13,29 @@ from .serializers import (
     WarehouseAnalyticsSerializer
 )
 from accounts.permissions import ModulePermission   # ✅ Hybrid permission
+from core.audit import log_action
+
+
+
+class RawMaterialViewSet(viewsets.ModelViewSet):
+    queryset =Material.objects.all()
+    serializer_class=MaterialSerializer
+    permission_classes=[ModulePermission]
+    module_name= "warehouse"
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        log_action(self.request, "CREATE", instance)
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        log_action(self.request, "UPDATE", instance)
+
+    def perform_destroy(self, instance):
+        log_action(self.request, "DELETE", instance)
+        instance.delete()
+
+
 
 class MaterialViewSet(viewsets.ModelViewSet):
     """
