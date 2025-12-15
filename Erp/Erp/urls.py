@@ -3,6 +3,13 @@ from django.urls import path, include
 from rest_framework_simplejwt.views import TokenRefreshView
 from accounts.views import MyTokenObtainPairView
 
+from django.conf import settings
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+)
+from rest_framework.permissions import IsAdminUser
+
 urlpatterns = [
     path('admin/', admin.site.urls),
 
@@ -23,5 +30,17 @@ urlpatterns = [
     
     path('api/transport/',include('transport.urls')),
     path("api/warehouse/",include('warehouse.urls')),
-
+     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
 ]
+
+if settings.DEBUG:
+    urlpatterns += [
+        path(
+            "api/docs/",
+            SpectacularSwaggerView.as_view(
+                url_name="schema",
+                permission_classes=[IsAdminUser],
+            ),
+            name="swagger-ui",
+        ),
+    ]

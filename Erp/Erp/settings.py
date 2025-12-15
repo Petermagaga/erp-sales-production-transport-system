@@ -9,14 +9,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config("SECRET_KEY", default="django-insecure-dev-key")
 
-DEBUG = config("DEBUG", default=True, cast=bool)
+DEBUG = config("DEBUG", cast=bool)
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_SSL_REDIRECT = True
+
 
 ALLOWED_HOSTS = [
-    "*",
     config("RENDER_EXTERNAL_HOSTNAME", default=""),
+    "localhost",
+    "127.0.0.1",
 ]
 
+
 INSTALLED_APPS = [
+    "drf_spectacular",
     'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -42,7 +53,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    "core.middleware.CurrentUserMiddleware"
+    "core.middleware.CurrentUserMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -51,7 +62,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
@@ -75,6 +86,17 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
+
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+    ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+
+
 }
 
 SIMPLE_JWT = {
@@ -114,6 +136,10 @@ else:
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
@@ -164,6 +190,53 @@ JAZZMIN_SETTINGS = {
         ],
     },
 }
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {"class": "logging.StreamHandler"},
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+}
+
+from django.conf import settings
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Unibrain ERP API",
+    "DESCRIPTION": """
+    ERP API for Unibrain Industries.
+
+    🔐 Authentication:
+    - JWT Bearer Token required for write operations
+
+    👥 Roles:
+    - Admin: Full access
+    - Module Owner: CRUD in own module
+    - Others: Read-only access
+    """,
+    "VERSION": "1.0.0",
+
+    # 🔒 Hide schema in production unless explicitly enabled
+    "SERVE_INCLUDE_SCHEMA": settings.DEBUG,
+
+    # 🔑 JWT support
+    "SECURITY": [{"bearerAuth": []}],
+    "COMPONENT_SPLIT_REQUEST": True,
+
+    # 📦 Module grouping
+    "TAGS": [
+        {"name": "Sales", "description": "Sales & customer operations"},
+        {"name": "Warehouse", "description": "Inventory & warehouse analytics"},
+        {"name": "Transport", "description": "Fleet & transport cost tracking"},
+        {"name": "Production", "description": "Production & efficiency analytics"},
+    ],
+}
+
+
 
 JAZZMIN_UI_TWEAKS = {
     "navbar": "navbar-success",           # Green top navbar
