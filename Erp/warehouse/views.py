@@ -1,4 +1,3 @@
-from datetime import date
 from django.db.models import (
     Sum, Avg, F, FloatField, Case, When, Value
 )
@@ -12,30 +11,14 @@ from .serializers import (
     DailyInventorySerializer,
     WarehouseAnalyticsSerializer
 )
-from accounts.permissions import ModulePermission   # ✅ Hybrid permission
-from core.audit import log_action
+
+from accounts.permissions import ModulePermission
+from accounts.permissions import AdminDeleteOnly   # ✅ Admin-only DELETE
 
 
-
-class RawMaterialViewSet(viewsets.ModelViewSet):
-    queryset =Material.objects.all()
-    serializer_class=MaterialSerializer
-    permission_classes=[ModulePermission]
-    module_name= "warehouse"
-
-    def perform_create(self, serializer):
-        instance = serializer.save()
-        log_action(self.request, "CREATE", instance)
-
-    def perform_update(self, serializer):
-        instance = serializer.save()
-        log_action(self.request, "UPDATE", instance)
-
-    def perform_destroy(self, instance):
-        log_action(self.request, "DELETE", instance)
-        instance.delete()
-
-
+# =====================================================
+# MATERIALS
+# =====================================================
 
 class MaterialViewSet(viewsets.ModelViewSet):
     """
@@ -44,9 +27,13 @@ class MaterialViewSet(viewsets.ModelViewSet):
     queryset = Material.objects.all().order_by("name")
     serializer_class = MaterialSerializer
 
-    permission_classes = [ModulePermission]
+    permission_classes = [ModulePermission, AdminDeleteOnly]
     module_name = "warehouse"
 
+
+# =====================================================
+# DAILY INVENTORY
+# =====================================================
 
 class DailyInventoryViewSet(viewsets.ModelViewSet):
     """
@@ -55,18 +42,16 @@ class DailyInventoryViewSet(viewsets.ModelViewSet):
     queryset = DailyInventory.objects.select_related("material").all()
     serializer_class = DailyInventorySerializer
 
-    permission_classes = [ModulePermission]
+    permission_classes = [ModulePermission, AdminDeleteOnly]
     module_name = "warehouse"
-
 
     @action(
         detail=False,
         methods=["get"],
-        permission_classes=[ModulePermission]  # READ-ONLY via SAFE_METHODS
     )
     def summary(self, request):
         """
-        Returns daily summary by warehouse & material
+        Returns daily inventory summary by material & category
         """
 
         queryset = self.get_queryset()
@@ -91,14 +76,19 @@ class DailyInventoryViewSet(viewsets.ModelViewSet):
                 total_shift_3=Sum("shift_3"),
                 total_closing=Sum("closing_balance"),
             )
-            .order_by("material__category")
+            .order_by("material__category", "material__name")
         )
 
         return Response(data)
 
-class WarehouseAnalyticsViewSet(viewsets.ModelViewSet):
+
+# =====================================================
+# WAREHOUSE ANALYTICS (READ-ONLY)
+# =====================================================
+
+class WarehouseAnalyticsViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    Warehouse KPI analytics
+    Warehouse KPI analytics (read-only)
     """
     queryset = WarehouseAnalytics.objects.all()
     serializer_class = WarehouseAnalyticsSerializer
@@ -106,11 +96,9 @@ class WarehouseAnalyticsViewSet(viewsets.ModelViewSet):
     permission_classes = [ModulePermission]
     module_name = "warehouse"
 
-
     @action(
         detail=False,
         methods=["get"],
-        permission_classes=[ModulePermission]  # READ-ONLY
     )
     def dashboard(self, request):
         """
@@ -129,27 +117,33 @@ class WarehouseAnalyticsViewSet(viewsets.ModelViewSet):
             queryset
             .values("date")
             .annotate(
-                total_raw_in_sum=Sum("total_raw_in"),
-                total_output_sum=Sum("total_output"),
-                total_waste_sum=Sum("total_waste"),
-                avg_efficiency_sum=Avg("efficiency_rate"),
+                total_raw_in=Sum("total_raw_in"),
+                total_output=Sum("total_output"),
+                total_waste=Sum("total_waste"),
+                avg_efficiency=Avg("efficiency_rate"),
             )
             .order_by("-date")
         )
 
         return Response(summary)
 
+
+# =====================================================
+# INVENTORY ANALYTICS (FUNCTION-BASED, READ-ONLY)
+# =====================================================
+
 @api_view(["GET"])
 def inventory_analytics(request):
     """
-    Inventory analytics – read-only for all roles
+    Inventory analytics – read-only for all authenticated roles
     """
 
-    # Manually enforce permission (FBV)
     permission = ModulePermission()
     permission.module_name = "warehouse"
 
-    if not permission.has_permission(request, view=type("obj", (), {"module_name": "warehouse"})):
+    fake_view = type("View", (), {"module_name": "warehouse"})
+
+    if not permission.has_permission(request, view=fake_view):
         return Response(
             {"detail": "Permission denied"},
             status=status.HTTP_403_FORBIDDEN
@@ -163,14 +157,16 @@ def inventory_analytics(request):
             total_raw_in=Sum("raw_in"),
             total_opening_balance=Sum("opening_balance"),
             total_closing_balance=Sum("closing_balance"),
-            total_shift1=Sum("shift_1"),
-            total_shift2=Sum("shift_2"),
-            total_shift3=Sum("shift_3"),
+            total_shift_1=Sum("shift_1"),
+            total_shift_2=Sum("shift_2"),
+            total_shift_3=Sum("shift_3"),
             avg_efficiency=Avg(
                 Case(
                     When(raw_in=0, then=Value(0)),
                     default=(
-                        F("shift_1") + F("shift_2") + F("shift_3")
+                        F("shift_1") +
+                        F("shift_2") +
+                        F("shift_3")
                     ) / F("raw_in"),
                     output_field=FloatField(),
                 )
