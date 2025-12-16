@@ -20,7 +20,7 @@ class VehicleSerializer(RoleAwareSerializer):
             "category",
             "driver_name",
             "active",
-            "created_at",
+            
         ]
 
     role_field_permissions = {

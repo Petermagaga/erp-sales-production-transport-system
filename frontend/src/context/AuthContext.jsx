@@ -5,62 +5,68 @@ import API from "../api/axios";
 
 export const AuthContext = createContext();
 
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
+const MOCK_USERNAME = "admin";
+const MOCK_PASSWORD = "1234";
+
 export const AuthProvider = ({ children }) => {
-  const [authTokens, setAuthTokens] = useState(() =>
-    localStorage.getItem("access")
-      ? {
-          access: localStorage.getItem("access"),
-          refresh: localStorage.getItem("refresh"),
-        }
-      : null
-  );
+  const [authTokens, setAuthTokens] = useState(() => {
+    const access = localStorage.getItem("access");
+    const refresh = localStorage.getItem("refresh");
+    return access && refresh ? { access, refresh } : null;
+  });
 
-  const [user, setUser] = useState(() =>
-    localStorage.getItem("access")
-      ? jwtDecode(localStorage.getItem("access"))
-      : null
-  );
+  const [user, setUser] = useState(() => {
+    const access = localStorage.getItem("access");
+    if (!access || access === "mock-token") return null;
+    try {
+      return jwtDecode(access);
+    } catch {
+      return null;
+    }
+  });
 
-  // ⭐ MOCK ACCOUNT (Option A)
-  const MOCK_USERNAME = "admin";
-  const MOCK_PASSWORD = "1234";
-
-  // ----------------------------------------------
-  // LOGIN USER
-  // ----------------------------------------------
+  // --------------------------------
+  // LOGIN
+  // --------------------------------
   const loginUser = async (username, password) => {
-    // ⭐ MOCK LOGIN (no backend needed)
-    if (username === MOCK_USERNAME && password === MOCK_PASSWORD) {
-      const fakeToken = "mock-token-123456";
+    // MOCK LOGIN (DEV ONLY)
+    if (USE_MOCK && username === MOCK_USERNAME && password === MOCK_PASSWORD) {
+      const fakeToken = "mock-token";
       localStorage.setItem("access", fakeToken);
       localStorage.setItem("refresh", fakeToken);
-
       setAuthTokens({ access: fakeToken, refresh: fakeToken });
-      setUser({ username: "mock_admin" });
-
+      setUser({ username: "mock_admin", role: "admin" });
       return { mock: true };
     }
 
-    // ⭐ REAL BACKEND LOGIN
-    const res = await API.post("token/", { username, password });
-    const data = res.data;
+    try {
+      const res = await API.post("token/", { username, password });
+      const data = res.data;
 
-    localStorage.setItem("access", data.access);
-    localStorage.setItem("refresh", data.refresh);
+      localStorage.setItem("access", data.access);
+      localStorage.setItem("refresh", data.refresh);
 
-    setAuthTokens({ access: data.access, refresh: data.refresh });
-    setUser(data.user || jwtDecode(data.access));
+      setAuthTokens({ access: data.access, refresh: data.refresh });
+      setUser(data.user || jwtDecode(data.access));
 
-    return data;
+      return data;
+    } catch (err) {
+      throw err;
+    }
   };
 
-  // REGISTER USER
+  // --------------------------------
+  // REGISTER
+  // --------------------------------
   const registerUser = async (registerData) => {
     const res = await API.post("accounts/register/", registerData);
     return res.data;
   };
 
-  // LOGOUT USER
+  // --------------------------------
+  // LOGOUT
+  // --------------------------------
   const logoutUser = () => {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
@@ -68,12 +74,12 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  // AUTO REFRESH TOKEN
+  // --------------------------------
+  // TOKEN REFRESH
+  // --------------------------------
   const updateToken = async () => {
     if (!authTokens?.refresh) return;
-
-    // Skip refresh for mock account
-    if (authTokens.access === "mock-token-123456") return;
+    if (authTokens.access === "mock-token") return;
 
     try {
       const res = await API.post("token/refresh/", {
@@ -83,17 +89,15 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("access", res.data.access);
       setAuthTokens((prev) => ({ ...prev, access: res.data.access }));
       setUser(jwtDecode(res.data.access));
-
-    } catch (error) {
+    } catch {
       logoutUser();
     }
   };
 
   useEffect(() => {
-    if (authTokens) {
-      const interval = setInterval(() => updateToken(), 1000 * 60 * 10);
-      return () => clearInterval(interval);
-    }
+    if (!authTokens) return;
+    const interval = setInterval(updateToken, 1000 * 60 * 10);
+    return () => clearInterval(interval);
   }, [authTokens]);
 
   return (

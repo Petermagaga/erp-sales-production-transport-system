@@ -30,7 +30,7 @@ urlpatterns = [
     
     path('api/transport/',include('transport.urls')),
     path("api/warehouse/",include('warehouse.urls')),
-     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
 ]
 
 if settings.DEBUG:

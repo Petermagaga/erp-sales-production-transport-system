@@ -13,6 +13,7 @@ class Vehicle(models.Model):
         default="probox"
     )
     driver_name = models.CharField(max_length=60)
+    created_at=models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=True)
 
     class Meta:

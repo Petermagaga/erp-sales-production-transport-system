@@ -42,3 +42,15 @@ class ModulePermission(BasePermission):
             return False
         # Only module owners can write
         return user.role in allowed_roles
+
+class AdminDeleteOnly(BasePermission):
+    """
+    Allows DELETE only for admins
+    """
+
+    def has_permission(self, request, view):
+        if request.method == "DELETE":
+            return request.user.is_authenticated and (
+                request.user.is_superuser or request.user.role == "admin"
+            )
+        return True

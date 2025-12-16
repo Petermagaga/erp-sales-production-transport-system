@@ -19,10 +19,10 @@ class User(AbstractUser):
     )
 
     role=models.CharField(max_length=30,choices=ROLE_CHOICES,default='sales')
-    phone=models.CharField(max_length=34,blank=True,null=True),
+    phone=models.CharField(max_length=34,blank=True,null=True)
 
-    department=models.CharField(max_length=20,choices=DEPARTMENT,default='field'),
-    created_at=models.DateTimeField(auto_now_add=True),
+    department=models.CharField(max_length=20,choices=DEPARTMENT,default='field')
+    created_at=models.DateTimeField(auto_now_add=True)
     updated_at=models.DateTimeField(auto_now=True)
 
     def __str__(self):

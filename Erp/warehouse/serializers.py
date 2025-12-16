@@ -123,16 +123,9 @@ class WarehouseAnalyticsSerializer(RoleAwareSerializer):
 
     class Meta:
         model = WarehouseAnalytics
-        fields = [
-            "id",
-            "date",
-            "total_raw_in",
-            "total_output",
-            "total_waste",
-            "efficiency_rate",
-        ]
+        fields = "__all__"
 
-        read_only_fields = "__all__"
+        read_only_fields = [f.name for f in model._meta.fields]
 
     role_field_permissions = {
         # Everyone can view

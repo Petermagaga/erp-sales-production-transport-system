@@ -4,7 +4,7 @@ from django.apps import apps
 from django.utils.timezone import now
 
 from core.middleware import get_current_request
-from .models import AuditLog
+from accounts.models import AuditLog
 
 
 # Only audit business apps (VERY IMPORTANT)
