@@ -6,6 +6,7 @@ export const rolePermissions = {
     "transport",
     "warehouse",
     "marketing",
+    "admin"
   ],
 
   sales: ["dashboard", "sales"],

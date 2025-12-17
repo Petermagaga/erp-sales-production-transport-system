@@ -44,6 +44,8 @@ import AnalyticsDashboard from "./pages/warehouse/AnalyticsDasboard";
 import Products from "./pages/Products";
 import CustomersList from "./pages/CustomersList";
 import Campaigns from "./pages/campaigns";
+import Admin from "./pages/admin/PendingUsers"
+import PendingUsers from "./pages/admin/PendingUsers";
 
 function App() {
   return (
@@ -220,6 +222,14 @@ function App() {
                   <Campaigns />
                 </ProtectedRoute>
               }
+            />
+
+            <Route 
+            path="admin"
+            element={
+              <ProtectedRoute module="admin">
+                <PendingUsers />
+              </ProtectedRoute>}
             />
 
             {/* Shared */}

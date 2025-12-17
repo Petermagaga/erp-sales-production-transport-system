@@ -1,7 +1,8 @@
 from rest_framework import generics,permissions
 from rest_framework_simplejwt.views import TokenObtainPairView
-
-
+from rest_framework.decorators import api_view,permission_classes
+from  rest_framework.permissions import IsAdminUser
+from rest_framework.response import Response
 from .serializers import (
     RegisterSerializer,
     UserSerializer,
@@ -30,3 +31,31 @@ class MyTokenObtainPairView(TokenObtainPairView):
 
     serializer_class=MyTokenObtainPairSerializer
     permission_classes=[permissions.AllowAny]
+
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def pending_users(request):
+    users=User.objects.filter(is_active=False)
+    data=[{
+        "id":u.id,
+        "username":u.username,
+        "email":u.email,
+        "role":u.role,
+        "created_at":u.date_joined,
+    }for u in users]
+    return Response(data)
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def approve_user(request,user_id):
+    try:
+        user=User.objects.get(id=user_id)
+        user.is_active = True
+        user.save()
+        return Response({"message":"User approved"})
+    except User.DoesNotExist:
+        return Response({"error": "User not found"},status=404)
+    
+    
