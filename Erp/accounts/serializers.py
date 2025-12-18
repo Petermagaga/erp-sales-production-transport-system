@@ -1,9 +1,10 @@
 
 from rest_framework import serializers
-from .models import User
+from .models import User,AuditLog
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -62,3 +63,23 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             'last_name': user.last_name,
         }
         return data
+    
+
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    user_email = serializers.CharField(source="user.email", read_only=True)
+
+    class Meta:
+        model = AuditLog
+        fields = [
+            "id",
+            "user_email",
+            "action",
+            "module",
+            "model_name",
+            "object_id",
+            "old_data",
+            "new_data",
+            "ip_address",
+            "created_at",
+        ]

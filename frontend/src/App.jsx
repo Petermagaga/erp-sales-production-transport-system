@@ -47,6 +47,8 @@ import Campaigns from "./pages/campaigns";
 
 import PendingUsers from "./pages/admin/PendingUsers";
 import Users from "./pages/admin/Users";
+import AuditLogs from "./pages/admin/AuditLogs";
+
 function App() {
   return (
     <BrowserRouter>
@@ -247,6 +249,14 @@ function App() {
               <Users />
             </ProtectedRoute>
           }
+        />
+        <Route
+        path="/admin/AuditLogs"
+        element={
+          <ProtectedRoute module="admin">
+            <AuditLogs/>
+          </ProtectedRoute>
+        }
         />
 
 

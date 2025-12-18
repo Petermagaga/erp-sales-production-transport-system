@@ -108,6 +108,14 @@ const Sidebar = () => {
           path: "/admin/users",
           module: "admin",
         },
+
+        {
+          name: "Audit Logs",
+          path: "/admin/AuditLogs",
+          module: "admin",
+        }
+
+
       ],
     },
 
