@@ -30,7 +30,7 @@ const Register = () => {
       navigate("/login");
     } catch (err) {
       console.error(err);
-      setError("Registration failed. Try again.");
+      setError("Registration successful. Await admin approval.");
     } finally {
       setLoading(false);
     }

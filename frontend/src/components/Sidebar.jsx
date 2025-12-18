@@ -92,6 +92,28 @@ const Sidebar = () => {
         },
       ],
     },
+
+    {
+      name: "Admin",
+      icon: LayoutDashboard, // or ShieldCheck if you prefer
+      module: "admin",
+      children: [
+        {
+          name: "Pending Users",
+          path: "/admin/PendingUsers",
+          module: "admin",
+        },
+        {
+          name: "User Management",
+          path: "/admin/users",
+          module: "admin",
+        },
+      ],
+    },
+
+
+
+
   ];
 
   const isGroupActive = (children = []) =>

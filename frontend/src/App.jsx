@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import { Toaster } from "react-hot-toast";
 // Auth pages
 import Login from "./auth/Login";
 import Register from "./auth/Register";
@@ -44,7 +44,7 @@ import AnalyticsDashboard from "./pages/warehouse/AnalyticsDasboard";
 import Products from "./pages/Products";
 import CustomersList from "./pages/CustomersList";
 import Campaigns from "./pages/campaigns";
-import Admin from "./pages/admin/PendingUsers"
+
 import PendingUsers from "./pages/admin/PendingUsers";
 
 function App() {
@@ -225,7 +225,7 @@ function App() {
             />
 
             <Route 
-            path="admin"
+            path="admin/PendingUsers"
             element={
               <ProtectedRoute module="admin">
                 <PendingUsers />
@@ -241,10 +241,31 @@ function App() {
           <Route path="*" element={<Unauthorized />} />
         </Routes>
 
+    <>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            borderRadius: "10px",
+            background: "#fff",
+            color: "#333",
+          },
+        }}
+      />
+      {/* your routes */}
+    </>
+
+
         <ToastContainer position="top-right" autoClose={2500} theme="colored" />
       </AuthProvider>
     </BrowserRouter>
-  );
+
+
+
+
+
+);
 }
 
 export default App;

@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,date
+
 
 from django.db.models import Sum, Count
 from django.db.models.functions import TruncWeek, TruncMonth, TruncYear
@@ -232,11 +233,17 @@ class AnalyticsView(APIView):
         sales_rep = request.GET.get("sales_rep")
         filter_type = request.GET.get("filter_type", "monthly")
 
-        start = parse_date(request.GET.get("start_date")) or (
-            datetime.today() - timedelta(days=30)
-        )
-        end = parse_date(request.GET.get("end_date")) or datetime.today()
+        start_param = request.GET.get("start_date")
+        end_param = request.GET.get("end_date")
 
+        start = parse_date(start_param) if isinstance(start_param, str) else None
+        end = parse_date(end_param) if isinstance(end_param, str) else None
+
+        # fallback defaults
+        if not start or not end:
+            today = date.today()
+            start = today.replace(day=1)
+            end = today
         sales = Sale.objects.filter(date__range=[start, end])
 
         if region:
