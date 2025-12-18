@@ -46,7 +46,7 @@ import CustomersList from "./pages/CustomersList";
 import Campaigns from "./pages/campaigns";
 
 import PendingUsers from "./pages/admin/PendingUsers";
-
+import Users from "./pages/admin/Users";
 function App() {
   return (
     <BrowserRouter>
@@ -239,7 +239,20 @@ function App() {
 
           {/* Fallback */}
           <Route path="*" element={<Unauthorized />} />
+
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute module="admin">
+              <Users />
+            </ProtectedRoute>
+          }
+        />
+
+
         </Routes>
+
+
 
     <>
       <Toaster

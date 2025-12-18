@@ -58,4 +58,30 @@ def approve_user(request,user_id):
     except User.DoesNotExist:
         return Response({"error": "User not found"},status=404)
     
-    
+
+@api_view(["GET"])
+@permission_classes([IsAdminUser])
+def list_users(request):
+    users=User.objects.all().order_by("-date_joined")
+    serializer= UserSerializer(users,many=True)
+    return Response(serializer.data)
+
+@api_view(["PATCH"])
+@permission_classes([IsAdminUser])
+def update_user(request, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+
+    role = request.data.get("role")
+    is_active = request.data.get("is_active")
+
+    if role:
+        user.role = role
+
+    if is_active is not None:
+        user.is_active = is_active
+
+    user.save()
+    return Response({"message": "User updated"})
