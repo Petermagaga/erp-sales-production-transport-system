@@ -12,8 +12,14 @@ from .serializers import (
 )
 
 from .models import User,AuditLog
+import csv
+from django.http import HttpResponse
 
 from .permissions import ModulePermission
+
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
 
 class RegisterView(generics.CreateAPIView):
     queryset=User.objects.all()
@@ -130,3 +136,71 @@ class AuditLogListView(ListAPIView):
             qs = qs.filter(user__email__icontains=user)
 
         return qs
+    
+
+@api_view(["GET"])
+@permission_classes([IsAdminUser])
+def export_audit_logs_csv(request):
+    logs = AuditLog.objects.all().order_by("-created_at")
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="audit_logs.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        "User",
+        "Action",
+        "Module",
+        "Model",
+        "Object ID",
+        "Old Data",
+        "New Data",
+        "IP Address",
+        "Date",
+    ])
+
+    for log in logs:
+        writer.writerow([
+            log.user.email if log.user else "",
+            log.action,
+            log.module,
+            log.model_name,
+            log.object_id,
+            log.old_data,
+            log.new_data,
+            log.ip_address,
+            log.created_at,
+        ])
+
+    return response
+
+
+@api_view(["GET"])
+@permission_classes([IsAdminUser])
+def export_audit_logs_pdf(request):
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="audit_logs.pdf"'
+
+    doc = SimpleDocTemplate(response, pagesize=A4)
+
+    logs = AuditLog.objects.all().order_by("-created_at")[:500]
+
+    data = [["User", "Action", "Module", "Date"]]
+
+    for log in logs:
+        data.append([
+            log.user.email if log.user else "",
+            log.action,
+            log.module,
+            log.created_at.strftime("%Y-%m-%d %H:%M"),
+        ])
+
+    table = Table(data, repeatRows=1)
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0,0), (-1,0), colors.grey),
+        ("GRID", (0,0), (-1,-1), 0.5, colors.black),
+        ("FONTSIZE", (0,0), (-1,-1), 8),
+    ]))
+
+    doc.build([table])
+    return response

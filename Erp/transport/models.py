@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 class Vehicle(models.Model):
     name = models.CharField(max_length=100)
@@ -30,6 +31,8 @@ class TransportRecord(models.Model):
     service_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     mechanical_issues = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    created_by=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,related_name="transport_records")
+
 
     class Meta:
         ordering = ['-date']

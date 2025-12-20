@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-
+from django.conf import settings
 user = get_user_model()
 
 # --- CHOICES ---
@@ -65,6 +65,12 @@ class DailyInventory(models.Model):
 
     remarks = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    created_by=models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null= True,
+        related_name="materials"
+    )
 
     class Meta:
         unique_together = ("material", "date")

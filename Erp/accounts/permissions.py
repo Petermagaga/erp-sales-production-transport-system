@@ -43,6 +43,27 @@ class ModulePermission(BasePermission):
         # Only module owners can write
         return user.role in allowed_roles
 
+
+class IsownerOrAdmin(BasePermission):
+    """
+     Object-level permission:
+    - Admin: full access
+    - Owner: edit/delete
+    - Others: read-only   
+    
+    """
+
+    def has_object_permission(self,request,view,obj):
+        user = request.user
+
+        if user.is_superuser or user.role == "admin":
+            return True
+        if  request.method in SAFE_METHODS:
+            return True
+        
+        return hasattr(obj,"created_by") and obj.created_by == user
+
+
 class AdminDeleteOnly(BasePermission):
     """
     Allows DELETE only for admins

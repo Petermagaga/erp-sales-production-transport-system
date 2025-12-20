@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from .models import Vehicle, TransportRecord
 from .serializers import VehicleSerializer, TransportRecordSerializer
 
-from accounts.permissions import ModulePermission, AdminDeleteOnly
+from accounts.permissions import ModulePermission, AdminDeleteOnly,IsownerOrAdmin
 
 
 # =====================================================
@@ -43,12 +43,15 @@ class TransportRecordViewSet(viewsets.ModelViewSet):
     )
     serializer_class = TransportRecordSerializer
 
-    permission_classes = [ModulePermission, AdminDeleteOnly]
+    permission_classes = [ModulePermission, AdminDeleteOnly,IsownerOrAdmin]
     module_name = "transport"
 
     # -------------------------------
     # FILTERING
     # -------------------------------
+
+    def perform_create(self,serializer):
+        serializer.save(created_by=self.request.user)
 
     def get_queryset(self):
         qs = super().get_queryset()
