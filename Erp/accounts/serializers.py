@@ -1,6 +1,7 @@
 
 from rest_framework import serializers
-from .models import User,AuditLog
+from .models import User
+from auditt.models import AuditLog
 from django.contrib.auth.password_validation import validate_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import authenticate

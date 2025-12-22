@@ -1,4 +1,4 @@
-from accounts.models import AuditLog
+from auditt.models import AuditLog
 
 def log_action(request,action,instance):
     AuditLog.objects.create(

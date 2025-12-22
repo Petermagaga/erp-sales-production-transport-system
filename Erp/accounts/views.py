@@ -11,7 +11,8 @@ from .serializers import (
     AuditLogSerializer,
 )
 
-from .models import User,AuditLog
+from .models import User
+from auditt.models import AuditLog
 import csv
 from django.http import HttpResponse
 
