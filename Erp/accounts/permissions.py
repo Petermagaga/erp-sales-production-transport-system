@@ -75,3 +75,31 @@ class AdminDeleteOnly(BasePermission):
                 request.user.is_superuser or request.user.role == "admin"
             )
         return True
+
+
+from rest_framework.permissions import BasePermission, SAFE_METHODS
+
+class ApprovalWorkflowPermission(BasePermission):
+    """
+    - Draft: owner can edit
+    - Pending: owner cannot edit
+    - Approved: locked (admin only)
+    """
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+
+        # Admin override
+        if user.is_superuser or user.role == "admin":
+            return True
+
+        # Read-only always allowed
+        if request.method in SAFE_METHODS:
+            return True
+
+        # Draft → owner can edit
+        if obj.status == "draft":
+            return obj.created_by == user
+
+        # Pending or Approved → no edits
+        return False

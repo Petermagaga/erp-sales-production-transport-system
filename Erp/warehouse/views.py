@@ -12,8 +12,8 @@ from .serializers import (
     WarehouseAnalyticsSerializer
 )
 
-from accounts.permissions import ModulePermission,AdminDeleteOnly,IsownerOrAdmin
-
+from accounts.permissions import (ModulePermission,AdminDeleteOnly,IsownerOrAdmin
+,ApprovalWorkflowPermission)
 # =====================================================
 # MATERIALS
 # =====================================================
@@ -25,12 +25,33 @@ class MaterialViewSet(viewsets.ModelViewSet):
     queryset = Material.objects.all().order_by("name")
     serializer_class = MaterialSerializer
 
-    permission_classes = [ModulePermission, AdminDeleteOnly,IsownerOrAdmin]
+    permission_classes = [ModulePermission, AdminDeleteOnly,IsownerOrAdmin,ApprovalWorkflowPermission]
     module_name = "warehouse"
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
+    def submit(self, request, pk=None):
+        material = self.get_object()
+        if material.created_by != request.user:
+            return Response(status=403)
+
+        material.status = "pending"
+        material.save()
+        return Response({"status": "submitted"})
+
+    @action(detail=True, methods=["post"])
+    def approve(self, request, pk=None):
+        if request.user.role not in ["admin", "warehouse"]:
+            return Response(status=403)
+
+        material = self.get_object()
+        material.status = "approved"
+        material.approved_by = request.user
+        material.approved_at = now()
+        material.save()
+
+        return Response({"status": "approved"})
         
 
 # =====================================================

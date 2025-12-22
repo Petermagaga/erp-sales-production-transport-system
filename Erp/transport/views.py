@@ -1,6 +1,7 @@
 from django.db.models import Sum
 from django.db.models.functions import TruncDay, TruncMonth
 from django.utils.dateparse import parse_date
+from django.utils.timezone import now
 from datetime import datetime, timedelta
 
 from rest_framework import viewsets, status
@@ -10,7 +11,8 @@ from rest_framework.response import Response
 from .models import Vehicle, TransportRecord
 from .serializers import VehicleSerializer, TransportRecordSerializer
 
-from accounts.permissions import ModulePermission, AdminDeleteOnly,IsownerOrAdmin
+from accounts.permissions import (ModulePermission, AdminDeleteOnly,
+                                  ApprovalWorkflowPermission,IsownerOrAdmin)
 
 
 # =====================================================
@@ -43,7 +45,7 @@ class TransportRecordViewSet(viewsets.ModelViewSet):
     )
     serializer_class = TransportRecordSerializer
 
-    permission_classes = [ModulePermission, AdminDeleteOnly,IsownerOrAdmin]
+    permission_classes = [ModulePermission, AdminDeleteOnly,IsownerOrAdmin,ApprovalWorkflowPermission,]
     module_name = "transport"
 
     # -------------------------------
@@ -52,6 +54,37 @@ class TransportRecordViewSet(viewsets.ModelViewSet):
 
     def perform_create(self,serializer):
         serializer.save(created_by=self.request.user)
+
+    def submit(self, request, pk=None):
+        record = self.get_object()
+
+        if record.created_by != request.user:
+            return Response(
+                {"detail": "Only owner can submit"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        record.status = "pending"
+        record.save()
+
+        return Response({"status": "submitted for approval"})
+
+    # ✅ APPROVE (Admin / Manager)
+    @action(detail=True, methods=["post"])
+    def approve(self, request, pk=None):
+        if request.user.role not in ["admin", "transporter"]:
+            return Response(
+                {"detail": "Not authorized"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        record = self.get_object()
+        record.status = "approved"
+        record.approved_by = request.user
+        record.approved_at = now()
+        record.save()
+
+        return Response({"status": "approved"})
 
     def get_queryset(self):
         qs = super().get_queryset()
