@@ -78,6 +78,24 @@ const AuditLogs = () => {
           Apply Filters
         </button>
       </div>
+      
+
+      <div className="flex gap-2 mb-4">
+        <a
+          href={`${API.defaults.baseURL}accounts/audit-logs/export/csv/`}
+          className="bg-blue-600 text-white px-3 py-1 rounded"
+        >
+          Export CSV
+        </a>
+
+        <a
+          href={`${API.defaults.baseURL}accounts/audit-logs/export/pdf/`}
+          className="bg-red-600 text-white px-3 py-1 rounded"
+        >
+          Export PDF
+        </a>
+      </div>
+
 
       {/* States */}
       {loading && <p className="text-gray-500">Loading audit logs…</p>}

@@ -12,9 +12,7 @@ from .serializers import (
     WarehouseAnalyticsSerializer
 )
 
-from accounts.permissions import ModulePermission
-from accounts.permissions import AdminDeleteOnly   # ✅ Admin-only DELETE
-
+from accounts.permissions import ModulePermission,AdminDeleteOnly,IsownerOrAdmin
 
 # =====================================================
 # MATERIALS
@@ -27,9 +25,13 @@ class MaterialViewSet(viewsets.ModelViewSet):
     queryset = Material.objects.all().order_by("name")
     serializer_class = MaterialSerializer
 
-    permission_classes = [ModulePermission, AdminDeleteOnly]
+    permission_classes = [ModulePermission, AdminDeleteOnly,IsownerOrAdmin]
     module_name = "warehouse"
 
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+        
 
 # =====================================================
 # DAILY INVENTORY

@@ -25,6 +25,13 @@ class Vehicle(models.Model):
 
 
 class TransportRecord(models.Model):
+    STATUS_CHOICES = (
+        ("draft", "Draft"),
+        ("pending", "Pending Approval"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+    )   
+
     vehicle = models.ForeignKey(Vehicle, on_delete=models.CASCADE, related_name='records')
     date = models.DateField()
     fuel_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -32,7 +39,21 @@ class TransportRecord(models.Model):
     mechanical_issues = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,related_name="transport_records")
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="draft"
+    )
 
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="approved_transport_records"
+    )
+
+    approved_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['-date']

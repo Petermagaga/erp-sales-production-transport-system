@@ -27,15 +27,48 @@ SHIFT_CHOICES = [
 ]
 
 
+
+
+
 # --- CORE MODELS ---
 
 class Material(models.Model):
     """
     Represents any item tracked — raw, finished, or by-product.
     """
+
+    STATUS_CHOICES = (
+        ("draft", "Draft"),
+        ("pending", "Pending Approval"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+    )
+
     name = models.CharField(max_length=200)
     category = models.CharField(max_length=100, choices=CATEGORY_CHOICES)
     unit = models.CharField(max_length=10, choices=UNIT_CHOICES, default="kg")
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="draft"
+    )
+
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="approved_materials"
+    )
+
+    approved_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together=('name','category')

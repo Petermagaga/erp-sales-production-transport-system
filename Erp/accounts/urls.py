@@ -1,6 +1,9 @@
 # accounts/urls.py
 from django.urls import path
-from .views import pending_users,approve_user,RegisterView, MyTokenObtainPairView, MeView,list_users,update_user,AuditLogListView
+from .views import (pending_users,approve_user,RegisterView,
+                     MyTokenObtainPairView, MeView,list_users,
+                     update_user,AuditLogListView, export_audit_logs_csv,
+                     export_audit_logs_pdf)
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
@@ -12,5 +15,9 @@ urlpatterns = [
     path("approve-user/<int:user_id>/",approve_user),
     path("users/",list_users),
     path("users/<int:user_id>/",update_user),
-    path("audit-logs/",AuditLogListView.as_view())    
+    path("audit-logs/",AuditLogListView.as_view()),
+    path("audit-logs/export/csv/", export_audit_logs_csv),
+    path("audit-logs/export/pdf/", export_audit_logs_pdf),
+
+
 ]
