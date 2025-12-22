@@ -29,6 +29,7 @@ ALLOWED_HOSTS = [
 INSTALLED_APPS = [
     "drf_spectacular",
     'jazzmin',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
     'production',
     'transport',
     'warehouse',
+    'auditt'
 ]
 
 MIDDLEWARE = [
@@ -54,6 +56,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     "core.middleware.CurrentRequestMiddleware",
+    "auditt.middleware.CurrentUserMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

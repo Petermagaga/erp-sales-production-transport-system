@@ -1,6 +1,10 @@
 from django.db import models
 from django.conf import settings
 
+
+
+
+
 class Vehicle(models.Model):
     name = models.CharField(max_length=100)
     plate_number = models.CharField(max_length=100)

@@ -249,3 +249,5 @@ class TransportRecordViewSet(viewsets.ModelViewSet):
             "vehicle_totals": vehicle_totals,
             "top_vehicles": top_vehicles,
         })
+
+
