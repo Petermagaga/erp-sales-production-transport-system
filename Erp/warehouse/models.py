@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.conf import settings
+from cores.models import Company,Branch
+from cores.querysets import CompanyQuerySet
+
 user = get_user_model()
 
 # --- CHOICES ---
@@ -83,6 +86,9 @@ class DailyInventory(models.Model):
     Records daily stock levels for a specific material.
     Auto-calculates closing balance and variance.
     """
+    company=models.ForeignKey(Company,on_delete=models.CASCADE)
+    branch= models.ForeignKey(Branch,on_delete=models.CASCADE)
+    
     date = models.DateField(default=timezone.now)
     material = models.ForeignKey(Material, on_delete=models.CASCADE, related_name="daily_records")
 
@@ -104,6 +110,7 @@ class DailyInventory(models.Model):
         null= True,
         related_name="materials"
     )
+    objects =CompanyQuerySet.as_manager()
 
     class Meta:
         unique_together = ("material", "date")

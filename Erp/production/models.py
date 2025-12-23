@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from cores.models import Company, Branch
+from cores.querysets import CompanyQuerySet
+
 User = get_user_model()
 
 SHIFT_CHOICES = [
@@ -13,6 +16,9 @@ SHIFT_CHOICES = [
 
 class RawMaterial(models.Model):
     """Tracks daily raw materials input per shift."""
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+
     date = models.DateField()
     shift = models.CharField(max_length=20, choices=SHIFT_CHOICES)
     maize_kg = models.FloatField(default=0)
@@ -22,6 +28,7 @@ class RawMaterial(models.Model):
     premix_kg = models.FloatField(default=0)
     total_raw_material = models.FloatField(default=0)
     supervisor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    objects=CompanyQuerySet.as_manager()
 
     def save(self, *args, **kwargs):
         self.total_raw_material = (

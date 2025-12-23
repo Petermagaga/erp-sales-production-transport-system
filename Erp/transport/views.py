@@ -108,6 +108,9 @@ class TransportRecordViewSet(viewsets.ModelViewSet):
 
         return qs
 
+    def get_queryset(self):
+        return TransportRecord.objects.for_user(self.request.user)
+
     # -------------------------------
     # ANALYTICS (READ-ONLY)
     # -------------------------------

@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
-
+from cores.models import Company,Branch
+from cores.querysets import CompanyQuerySet
 
 # ================================
 # 1️⃣  COMMON BASE MODELS
@@ -19,12 +20,16 @@ class TimeStampedModel(models.Model):
 # ================================
 class Salesperson(TimeStampedModel):
     """Company sales and marketing personnel."""
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+
     name = models.CharField(max_length=100)
     phone = models.CharField(max_length=15, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     region = models.CharField(max_length=100, blank=True, null=True)
     status = models.BooleanField(default=True)
 
+    objects= CompanyQuerySet.as_manager()
     def __str__(self):
         return f"{self.name} ({self.region})" if self.region else self.name
 
@@ -74,6 +79,8 @@ class Batch(TimeStampedModel):
 # 3️⃣  SALES TRACKING
 # ================================
 class Sale(TimeStampedModel):
+
+    
     date = models.DateField(default=timezone.now)
     salesperson = models.ForeignKey(Salesperson, on_delete=models.SET_NULL, null=True, related_name='sales')
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, related_name='sales')

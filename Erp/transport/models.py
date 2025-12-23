@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
-
+from cores.models import Company, Branch
+from cores.querysets import CompanyQuerySet
 
 
 
@@ -41,6 +42,8 @@ class TransportRecord(models.Model):
     fuel_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     service_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     mechanical_issues = models.TextField(blank=True, null=True)
+    company=models.ForeignKey(Company,on_delete=models.CASCADE)
+    branch= models.ForeignKey(Branch,on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,related_name="transport_records")
     status = models.CharField(
@@ -59,6 +62,8 @@ class TransportRecord(models.Model):
 
     approved_at = models.DateTimeField(null=True, blank=True)
 
+    objects= CompanyQuerySet.as_manager()
+    
     class Meta:
         ordering = ['-date']
         constraints = [
@@ -70,3 +75,4 @@ class TransportRecord(models.Model):
 
     def total_cost(self):
         return (self.fuel_cost or 0) + (self.service_cost or 0)
+    
