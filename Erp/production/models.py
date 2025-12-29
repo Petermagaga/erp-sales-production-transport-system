@@ -16,8 +16,8 @@ SHIFT_CHOICES = [
 
 class RawMaterial(models.Model):
     """Tracks daily raw materials input per shift."""
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE,null=True,blank=True)
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE,null=True,blank=True)
 
     date = models.DateField()
     shift = models.CharField(max_length=20, choices=SHIFT_CHOICES)

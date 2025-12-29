@@ -20,8 +20,8 @@ class TimeStampedModel(models.Model):
 # ================================
 class Salesperson(TimeStampedModel):
     """Company sales and marketing personnel."""
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE,blank=True,null=True)
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE,null=True,blank=True)
 
     name = models.CharField(max_length=100)
     phone = models.CharField(max_length=15, blank=True, null=True)

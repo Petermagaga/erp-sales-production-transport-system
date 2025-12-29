@@ -86,8 +86,8 @@ class DailyInventory(models.Model):
     Records daily stock levels for a specific material.
     Auto-calculates closing balance and variance.
     """
-    company=models.ForeignKey(Company,on_delete=models.CASCADE)
-    branch= models.ForeignKey(Branch,on_delete=models.CASCADE)
+    company=models.ForeignKey(Company,on_delete=models.CASCADE,null=True,blank=True)
+    branch= models.ForeignKey(Branch,on_delete=models.CASCADE,null=True,blank=True)
     
     date = models.DateField(default=timezone.now)
     material = models.ForeignKey(Material, on_delete=models.CASCADE, related_name="daily_records")

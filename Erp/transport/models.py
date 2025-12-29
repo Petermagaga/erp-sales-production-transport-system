@@ -42,8 +42,8 @@ class TransportRecord(models.Model):
     fuel_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     service_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     mechanical_issues = models.TextField(blank=True, null=True)
-    company=models.ForeignKey(Company,on_delete=models.CASCADE)
-    branch= models.ForeignKey(Branch,on_delete=models.CASCADE)
+    company=models.ForeignKey(Company,on_delete=models.CASCADE,blank=True,null=True)
+    branch= models.ForeignKey(Branch,on_delete=models.CASCADE,null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,related_name="transport_records")
     status = models.CharField(
