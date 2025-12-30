@@ -7,10 +7,13 @@ from datetime import datetime, timedelta
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
+
+
 from notifications.services import notify_role
 from .models import Vehicle, TransportRecord
 from .serializers import VehicleSerializer, TransportRecordSerializer
-
+from cores.utils.periods import is_period_locked
 from accounts.permissions import (ModulePermission, AdminDeleteOnly,
                                   ApprovalWorkflowPermission,IsownerOrAdmin)
 
@@ -54,6 +57,14 @@ class TransportRecordViewSet(viewsets.ModelViewSet):
 
     def perform_create(self,serializer):
         serializer.save(created_by=self.request.user)
+
+    def perform_update(self, serializer):
+        record = self.get_object()
+
+        if is_period_locked(company=record.company, date=record.date):
+            raise PermissionDenied("This period is locked. Cannot edit.")
+
+        serializer.save()
 
     def submit(self, request, pk=None):
         record = self.get_object()
@@ -103,6 +114,9 @@ class TransportRecordViewSet(viewsets.ModelViewSet):
             module="transport",
             object_id=record.id,
         )
+
+        if is_period_locked(company=record.company, date=record.date):
+            raise PermissionDenied("Cannot approve record in locked period.")
 
         return Response({"status": "approved"})
 

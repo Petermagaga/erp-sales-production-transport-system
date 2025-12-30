@@ -1,5 +1,8 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from cores.utils.periods import is_period_locked
+
 from cores.models import Company, Branch
 from cores.querysets import CompanyQuerySet
 
@@ -42,7 +45,7 @@ class TransportRecord(models.Model):
     fuel_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     service_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     mechanical_issues = models.TextField(blank=True, null=True)
-    company=models.ForeignKey(Company,on_delete=models.CASCADE,blank=True,null=True)
+    company=models.ForeignKey("cores.Company",on_delete=models.CASCADE,blank=True,null=True)
     branch= models.ForeignKey(Branch,on_delete=models.CASCADE,null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,related_name="transport_records")
@@ -69,6 +72,11 @@ class TransportRecord(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['vehicle', 'date'], name='unique_vehicle_date')
         ]
+
+    def clean(self):
+        if self.pk:  # only block edits, not creation
+            if is_period_locked(company=self.company, date=self.date):
+                raise ValidationError("This accounting period is locked.")
 
     def __str__(self):
         return f"{self.vehicle.plate_number} - {self.date}"
