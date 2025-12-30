@@ -24,3 +24,28 @@ class Branch(models.Model):
     
     def __str__(self):
         return f"{self.company.name} - {self.name}"
+
+
+class AccountingPeriod(models.Model):
+    company=models.ForeignKey("cores.company",on_delete=models.CASCADE)
+    year=models.PositiveIntegerField()
+    month=models.PositiveIntegerField()
+    is_locked=models.BooleanField(default=False)
+
+    locked_at=models.DateTimeField(null=True,blank=True)
+    locked_by=models.ForeignKey(
+        "accounts.User",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+
+    class Meta:
+        unique_together= ("company","year","month")
+        ordering= ["-year","-month"]
+
+
+    def __str__(self):
+        status = "Locked" if self.is_locked else "Open"
+
+        return f"{self.company} - {self.year}-{self.month} ({status})"
