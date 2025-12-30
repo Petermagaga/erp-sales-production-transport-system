@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
+from notifications.services import notify_role
 from .models import Vehicle, TransportRecord
 from .serializers import VehicleSerializer, TransportRecordSerializer
 
@@ -67,6 +67,16 @@ class TransportRecordViewSet(viewsets.ModelViewSet):
         record.status = "pending"
         record.save()
 
+        notify_role(
+            role="transporter",
+            company=record.company,
+            title="Transport record pending approval",
+            message=f"Transport record #{record.id} was submitted for approval.",
+            module="transport",
+            object_id=record.id,
+        )
+
+
         return Response({"status": "submitted for approval"})
 
     # ✅ APPROVE (Admin / Manager)
@@ -83,6 +93,16 @@ class TransportRecordViewSet(viewsets.ModelViewSet):
         record.approved_by = request.user
         record.approved_at = now()
         record.save()
+
+        notify_user(
+            user=record.created_by,
+            company=record.company,
+            title="Transport record approved",
+            message=f"Your transport record #{record.id} has been approved. ",
+            notification_type="success",
+            module="transport",
+            object_id=record.id,
+        )
 
         return Response({"status": "approved"})
 

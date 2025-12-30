@@ -11,7 +11,7 @@ from .serializers import (
     DailyInventorySerializer,
     WarehouseAnalyticsSerializer
 )
-
+from notifications.services import notify_role,notify_user
 from accounts.permissions import (ModulePermission,AdminDeleteOnly,IsownerOrAdmin
 ,ApprovalWorkflowPermission)
 # =====================================================
@@ -38,6 +38,18 @@ class MaterialViewSet(viewsets.ModelViewSet):
 
         material.status = "pending"
         material.save()
+
+
+        notify_role(
+            role="warehouse",
+            company=record.company,
+            title="warehouse record pending approval",
+            message=f"warehouse record #{record.id} was submitted for approval.",
+            module="warehouse",
+            object_id=record.id,
+        )
+
+
         return Response({"status": "submitted"})
 
     @action(detail=True, methods=["post"])
@@ -50,6 +62,18 @@ class MaterialViewSet(viewsets.ModelViewSet):
         material.approved_by = request.user
         material.approved_at = now()
         material.save()
+
+        notify_user(
+            user=record.created_by,
+            company=record.company,
+            title="warehouse record approved",
+            message=f"Your warehouse record #{record.id} has been approved.",
+            notification_type="success",
+            module="warehouse",
+            object_id=record.id,
+        )
+
+
 
         return Response({"status": "approved"})
         

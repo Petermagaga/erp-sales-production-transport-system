@@ -49,7 +49,8 @@ INSTALLED_APPS = [
     'transport',
     'warehouse',
     'auditt',
-    'cores'
+    'cores',
+    'notifications',
 ]
 
 MIDDLEWARE = [
