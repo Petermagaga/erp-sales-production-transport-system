@@ -20,6 +20,13 @@ class AuditLog(models.Model):
         on_delete=models.SET_NULL
     )
 
+    model_name = models.CharField(max_length=100)  # ✅ ADD
+    object_id = models.CharField(max_length=50)
+
+    old_data = models.JSONField(null=True, blank=True)  # ✅ ADD
+    new_data = models.JSONField(null=True, blank=True)  # ✅ ADD
+
+
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     module = models.CharField(max_length=50)
 

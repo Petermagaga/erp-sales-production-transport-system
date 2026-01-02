@@ -6,7 +6,7 @@ from warehouse.models import DailyInventory
 
 def get_company_kpis(company, start_date, end_date):
     sales = Sale.objects.filter(
-        company=company,
+        salesperson__company=company,
         date__range=[start_date, end_date]
     )
 

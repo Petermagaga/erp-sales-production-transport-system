@@ -5,7 +5,7 @@ from sales.models import Sale
 def monthly_revenue_trend(company, start_date, end_date):
     qs = (
         Sale.objects
-        .filter(company=company, date__range=[start_date, end_date])
+        .filter(salesperson__company=company, date__range=[start_date, end_date])
         .annotate(month=TruncMonth("date"))
         .values("month")
         .annotate(total=Sum("total_amount"))

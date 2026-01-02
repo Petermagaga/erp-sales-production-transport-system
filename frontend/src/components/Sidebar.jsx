@@ -28,6 +28,16 @@ const Sidebar = () => {
   };
 
   const menuItems = [
+
+    {
+      name: "Executive Dashboard",
+      path: "/executive",
+      icon: LayoutDashboard,
+      module: "admin", // or "executive" if you have that permission
+      role: "admin",   // 👈 custom role check
+    },
+
+
     {
       name: "Dashboard",
       path: "/dashboard",
@@ -97,6 +107,7 @@ const Sidebar = () => {
       name: "Admin",
       icon: LayoutDashboard, // or ShieldCheck if you prefer
       module: "admin",
+      role:"admin",
       children: [
         {
           name: "Pending Users",
@@ -163,9 +174,16 @@ const Sidebar = () => {
       {/* Navigation */}
       <nav className="flex-1 mt-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
+
+          if (item.role && user?.role !== item.role) {
+            return null;
+          }
+
           const Icon = item.icon;
           const allowed = canAccess(item.module);
           const groupActive = isGroupActive(item.children);
+
+          // role-based visibility (extra check)
 
           // AUTO OPEN ACTIVE GROUP
           if (groupActive && openDropdown !== item.name) {

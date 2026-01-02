@@ -49,6 +49,8 @@ import PendingUsers from "./pages/admin/PendingUsers";
 import Users from "./pages/admin/Users";
 import AuditLogs from "./pages/admin/AuditLogs";
 
+import ExecutiveDashboard from "./pages/executive/ExecutiveDashboard";
+
 function App() {
   return (
     <BrowserRouter>
@@ -258,6 +260,17 @@ function App() {
           </ProtectedRoute>
         }
         />
+
+
+        <Route
+          path="/executive"
+          element={
+            <PrivateRoute allowedRoles={["admin"]}>
+              <ExecutiveDashboard />
+            </PrivateRoute>
+          }
+        />
+
 
 
         </Routes>

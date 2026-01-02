@@ -17,7 +17,7 @@ from cores.utils.periods import is_period_locked
 from accounts.permissions import (ModulePermission, AdminDeleteOnly,
                                   ApprovalWorkflowPermission,IsownerOrAdmin)
 
-
+from billing.utils.features import is_feature_enabled
 # =====================================================
 # VEHICLES
 # =====================================================
@@ -287,4 +287,8 @@ class TransportRecordViewSet(viewsets.ModelViewSet):
             "top_vehicles": top_vehicles,
         })
 
+def initial(self, request, *args, **kwargs):
+    super().initial(request, *args, **kwargs)
 
+    if not is_feature_enabled(request.user.company, "transport"):
+        raise PermissionDenied("Transport module not enabled for your plan.")
