@@ -11,7 +11,7 @@ from .serializers import (
     AuditLogSerializer,
 )
 
-from .models import User
+from .models import User,Company
 from auditt.models import AuditLog
 import csv
 from django.http import HttpResponse
@@ -21,6 +21,9 @@ from .permissions import ModulePermission
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
+
+from rest_framework.views import APIView
+from rest_framework import status 
 
 class RegisterView(generics.CreateAPIView):
     queryset=User.objects.all()
@@ -205,3 +208,24 @@ def export_audit_logs_pdf(request):
 
     doc.build([table])
     return response
+
+class SignUpView(APIView):
+    permission_classes=[]
+
+
+    def post(self,request):
+        company=Company.objects.create(
+            name=request.data["company_name"]
+
+        )
+
+        user=User.objects.create_user(
+            username=request.data["email"],
+            email=request.data["email"],
+            password=request.data["password"],
+            role="admin",
+            company=company
+        )
+
+
+        return Response({"success":True},status=status.HTTP_201_CREATED)
