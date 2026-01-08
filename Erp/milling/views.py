@@ -330,3 +330,303 @@ class MillingDailyChartView(APIView):
             "maize_milled": maize,
             "waste": waste,
         })
+    
+# =====================================================
+# MONTHLY CHARTS API
+# =====================================================
+
+class MillingMonthlyChartView(APIView):
+    """
+    Monthly maize, efficiency & waste trends
+    """
+    permission_classes = [ModulePermission]
+    module_name = "milling"
+
+    def get(self, request):
+        today = datetime.today().date()
+
+        start_date = parse_date(request.GET.get("start_date")) or (
+            today - timedelta(days=365)
+        )
+        end_date = parse_date(request.GET.get("end_date")) or today
+        shift = request.GET.get("shift")
+
+        qs = MillingBatch.objects.filter(
+            date__range=[start_date, end_date]
+        )
+
+        if shift and shift.lower() != "all":
+            qs = qs.filter(shift__iexact=shift)
+
+        monthly = qs.annotate(
+            month=TruncMonth("date")
+        ).values("month").annotate(
+            total_maize=Sum("maize_milled_kg"),
+            total_waste=Sum("waste_kg"),
+            avg_efficiency=Avg("efficiency"),
+        ).order_by("month")
+
+        labels = []
+        maize = []
+        waste = []
+        efficiency = []
+
+        for row in monthly:
+            labels.append(row["month"].strftime("%Y-%m"))
+            maize.append(row["total_maize"] or 0)
+            waste.append(row["total_waste"] or 0)
+            efficiency.append(round(row["avg_efficiency"] or 0, 2))
+
+        return Response({
+            "labels": labels,
+            "total_maize": maize,
+            "total_waste": waste,
+            "avg_efficiency": efficiency,
+        })
+
+# =====================================================
+# WASTE RATIO CHART API
+# =====================================================
+
+class MillingWasteRatioChartView(APIView):
+    """
+    Waste ratio = (total waste / total maize) * 100
+    """
+    permission_classes = [ModulePermission]
+    module_name = "milling"
+
+    def get(self, request):
+        today = datetime.today().date()
+
+        start_date = parse_date(request.GET.get("start_date")) or (
+            today - timedelta(days=30)
+        )
+        end_date = parse_date(request.GET.get("end_date")) or today
+        shift = request.GET.get("shift")
+
+        qs = MillingBatch.objects.filter(
+            date__range=[start_date, end_date]
+        )
+
+        if shift and shift.lower() != "all":
+            qs = qs.filter(shift__iexact=shift)
+
+        daily = qs.annotate(
+            day=TruncDay("date")
+        ).values("day").annotate(
+            total_maize=Sum("maize_milled_kg"),
+            total_waste=Sum("waste_kg"),
+        ).order_by("day")
+
+        labels = []
+        waste_ratio = []
+        total_waste = []
+        total_maize = []
+
+        for row in daily:
+            maize = row["total_maize"] or 0
+            waste = row["total_waste"] or 0
+
+            ratio = (waste / maize * 100) if maize > 0 else 0
+
+            labels.append(row["day"].strftime("%Y-%m-%d"))
+            waste_ratio.append(round(ratio, 2))
+            total_waste.append(waste)
+            total_maize.append(maize)
+
+        return Response({
+            "labels": labels,
+            "waste_ratio": waste_ratio,
+            "total_waste": total_waste,
+            "total_maize": total_maize,
+        })
+
+
+# =====================================================
+# BEST / WORST SHIFT RANKING API
+# =====================================================
+
+class MillingShiftRankingView(APIView):
+    """
+    Best & worst performing shift based on avg efficiency
+    """
+    permission_classes = [ModulePermission]
+    module_name = "milling"
+
+    def get(self, request):
+        today = datetime.today().date()
+
+        start_date = parse_date(request.GET.get("start_date")) or (
+            today - timedelta(days=30)
+        )
+        end_date = parse_date(request.GET.get("end_date")) or today
+
+        qs = MillingBatch.objects.filter(date__range=[start_date, end_date])
+
+        shift_stats = qs.values("shift").annotate(
+            avg_efficiency=Avg("efficiency"),
+            total_maize=Sum("maize_milled_kg"),
+            total_waste=Sum("waste_kg"),
+        )
+
+        if not shift_stats:
+            return Response({
+                "best_shift": None,
+                "worst_shift": None
+            })
+
+        best_shift = max(shift_stats, key=lambda x: x["avg_efficiency"] or 0)
+        worst_shift = min(shift_stats, key=lambda x: x["avg_efficiency"] or 0)
+
+        return Response({
+            "best_shift": {
+                "shift": best_shift["shift"],
+                "avg_efficiency": round(best_shift["avg_efficiency"] or 0, 2),
+                "total_maize": best_shift["total_maize"] or 0,
+                "total_waste": best_shift["total_waste"] or 0,
+            },
+            "worst_shift": {
+                "shift": worst_shift["shift"],
+                "avg_efficiency": round(worst_shift["avg_efficiency"] or 0, 2),
+                "total_maize": worst_shift["total_maize"] or 0,
+                "total_waste": worst_shift["total_waste"] or 0,
+            }
+        })
+# =====================================================
+# MILLING DASHBOARD (COMBINED API)
+# =====================================================
+
+class MillingDashboardView(APIView):
+    """
+    Combined dashboard API for all charts & KPIs
+    """
+    permission_classes = [ModulePermission]
+    module_name = "milling"
+
+    def get(self, request):
+        today = datetime.today().date()
+
+        start_date = parse_date(request.GET.get("start_date")) or (
+            today - timedelta(days=30)
+        )
+        end_date = parse_date(request.GET.get("end_date")) or today
+
+        qs = MillingBatch.objects.filter(date__range=[start_date, end_date])
+
+        # =====================================================
+        # SUMMARY KPI
+        # =====================================================
+        totals = qs.aggregate(
+            total_maize=Sum("maize_milled_kg"),
+            total_output=Sum("total_output_kg"),
+            avg_efficiency=Avg("efficiency"),
+            total_waste=Sum("waste_kg"),
+        )
+
+        total_maize = totals["total_maize"] or 0
+        total_waste = totals["total_waste"] or 0
+
+        waste_ratio = (
+            (total_waste / total_maize) * 100 if total_maize else 0
+        )
+
+        summary = {
+            "total_maize": total_maize,
+            "total_output": totals["total_output"] or 0,
+            "avg_efficiency": round(totals["avg_efficiency"] or 0, 2),
+            "total_waste": total_waste,
+            "waste_ratio": round(waste_ratio, 2),
+        }
+
+        # =====================================================
+        # DAILY EFFICIENCY CHART
+        # =====================================================
+        daily_efficiency = qs.annotate(
+            day=TruncDay("date")
+        ).values("day").annotate(
+            avg_efficiency=Avg("efficiency")
+        ).order_by("day")
+
+        daily_efficiency_data = [
+            {
+                "date": d["day"].strftime("%Y-%m-%d"),
+                "efficiency": round(d["avg_efficiency"] or 0, 2)
+            }
+            for d in daily_efficiency
+        ]
+
+        # =====================================================
+        # MONTHLY TRENDS
+        # =====================================================
+        monthly = qs.annotate(
+            month=TruncMonth("date")
+        ).values("month").annotate(
+            total_maize=Sum("maize_milled_kg"),
+            avg_efficiency=Avg("efficiency"),
+        ).order_by("month")
+
+        monthly_data = [
+            {
+                "month": m["month"].strftime("%Y-%m"),
+                "total_maize": m["total_maize"] or 0,
+                "avg_efficiency": round(m["avg_efficiency"] or 0, 2),
+            }
+            for m in monthly
+        ]
+
+        # =====================================================
+        # WASTE RATIO CHART
+        # =====================================================
+        waste_chart = qs.annotate(
+            day=TruncDay("date")
+        ).values("day").annotate(
+            total_waste=Sum("waste_kg"),
+            total_maize=Sum("maize_milled_kg"),
+        ).order_by("day")
+
+        waste_chart_data = [
+            {
+                "date": w["day"].strftime("%Y-%m-%d"),
+                "waste_ratio": round(
+                    ((w["total_waste"] or 0) / (w["total_maize"] or 1)) * 100,
+                    2
+                ),
+            }
+            for w in waste_chart
+        ]
+
+        # =====================================================
+        # SHIFT RANKING
+        # =====================================================
+        shift_stats = qs.values("shift").annotate(
+            avg_efficiency=Avg("efficiency"),
+            total_maize=Sum("maize_milled_kg"),
+            total_waste=Sum("waste_kg"),
+        )
+
+        if shift_stats:
+            best_shift = max(
+                shift_stats, key=lambda x: x["avg_efficiency"] or 0
+            )
+            worst_shift = min(
+                shift_stats, key=lambda x: x["avg_efficiency"] or 0
+            )
+        else:
+            best_shift = None
+            worst_shift = None
+
+        shift_ranking = {
+            "best_shift": best_shift,
+            "worst_shift": worst_shift,
+        }
+
+        # =====================================================
+        # FINAL RESPONSE
+        # =====================================================
+        return Response({
+            "summary": summary,
+            "daily_efficiency": daily_efficiency_data,
+            "monthly_trends": monthly_data,
+            "waste_ratio_chart": waste_chart_data,
+            "shift_ranking": shift_ranking,
+        })
