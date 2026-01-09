@@ -7,14 +7,12 @@ export const getMillingDashboard = async (params = {}) => {
   return response.data;
 };
 
-
 export const getMillingBatches = async () => {
-  const res = await api.get("/milling/batches/");
+  const res = await axios.get("/milling/batches/");
   return res.data;
 };
 
-
-export const createMillingBatches = async (payload) => {
-  const res = await api.post("/milling/batches/", payload);
+export const createMillingBatch = async (payload) => {
+  const res = await axios.post("/milling/batches/", payload);
   return res.data;
 };

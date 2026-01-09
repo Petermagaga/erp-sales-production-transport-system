@@ -55,9 +55,13 @@ class MillingBatchViewSet(viewsets.ModelViewSet):
         - branch
         """
         qs = super().get_queryset()
+    
+        start_param = self.request.GET.get("start_date")
+        end_param = self.request.GET.get("end_date")
 
-        start_date = parse_date(self.request.GET.get("start_date"))
-        end_date = parse_date(self.request.GET.get("end_date"))
+
+        start_date = parse_date(start_param) if isinstance(start_param, str) else None
+        end_date = parse_date(end_param) if isinstance(end_param, str) else None
         shift = self.request.GET.get("shift")
         batch_no = self.request.GET.get("batch_no")
         company = self.request.GET.get("company")
