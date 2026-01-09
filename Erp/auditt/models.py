@@ -25,7 +25,7 @@ class AuditLog(models.Model):
 
     old_data = models.JSONField(null=True, blank=True)  # ✅ ADD
     new_data = models.JSONField(null=True, blank=True)  # ✅ ADD
-
+    object_name=models.CharField(max_length=100,blank=True,null=True)
 
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
     module = models.CharField(max_length=50)

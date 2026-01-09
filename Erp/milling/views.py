@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta,date
 
+from rest_framework import status
+
 import csv
 from django.http import HttpResponse
 from openpyxl import Workbook
@@ -98,6 +100,16 @@ class MillingBatchViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         log_action(self.request, "DELETE", instance)
         instance.delete()
+
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print("❌ VALIDATION ERRORS:", serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         # =====================================================
     # EXPORT CSV
