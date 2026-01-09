@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,date
 
 import csv
 from django.http import HttpResponse
@@ -6,11 +6,11 @@ from openpyxl import Workbook
 from rest_framework.decorators import action
 
 from django.db.models import Avg
-from django.db.models.functions import TruncDay
 
 from django.db.models import Sum, Avg
-from django.db.models.functions import TruncWeek
+from django.db.models.functions import TruncDay,TruncWeek,TruncMonth
 from django.utils.dateparse import parse_date
+from django.db.models import F,FloatField,ExpressionWrapper
 
 from rest_framework import status, viewsets
 from rest_framework.views import APIView
@@ -29,6 +29,10 @@ from core.audit import log_action
 # =====================================================
 # MILLING BATCH CRUD
 # =====================================================
+
+EFFICIENCY_EXPR= ExpressionWrapper(
+    (F("total_output_kg") * 100.0)/ F("maize_milled_kg"),output_field=FloatField()
+)
 
 class MillingBatchViewSet(viewsets.ModelViewSet):
     """
@@ -221,7 +225,8 @@ class MillingAnalyticsView(APIView):
             total_chaff=Sum("maize_chaffs_kg"),
             total_waste=Sum("waste_kg"),
             total_bales=Sum("bales"),
-            avg_efficiency=Avg("efficiency"),
+            avg_efficiency=Avg(EFFICIENCY_EXPR)
+,
         )
 
         # -------------------------------
@@ -234,7 +239,8 @@ class MillingAnalyticsView(APIView):
             data = s_qs.aggregate(
                 total_maize=Sum("maize_milled_kg"),
                 total_bales=Sum("bales"),
-                avg_efficiency=Avg("efficiency"),
+                avg_efficiency=Avg(EFFICIENCY_EXPR)
+,
             )
 
             shift_performance.append({
@@ -251,7 +257,8 @@ class MillingAnalyticsView(APIView):
             week=TruncWeek("date")
         ).values("week").annotate(
             total_maize=Sum("maize_milled_kg"),
-            avg_efficiency=Avg("efficiency"),
+            avg_efficiency=Avg(EFFICIENCY_EXPR)
+,
         ).order_by("week")
 
         weekly_trends = [
@@ -308,7 +315,7 @@ class MillingDailyChartView(APIView):
         daily = qs.annotate(
             day=TruncDay("date")
         ).values("day").annotate(
-            avg_efficiency=Avg("efficiency"),
+            avg_efficiency=Avg(EFFICIENCY_EXPR),
             total_maize=Sum("maize_milled_kg"),
             total_waste=Sum("waste_kg"),
         ).order_by("day")
@@ -363,7 +370,8 @@ class MillingMonthlyChartView(APIView):
         ).values("month").annotate(
             total_maize=Sum("maize_milled_kg"),
             total_waste=Sum("waste_kg"),
-            avg_efficiency=Avg("efficiency"),
+            avg_efficiency=Avg(EFFICIENCY_EXPR)
+,
         ).order_by("month")
 
         labels = []
@@ -464,7 +472,7 @@ class MillingShiftRankingView(APIView):
         qs = MillingBatch.objects.filter(date__range=[start_date, end_date])
 
         shift_stats = qs.values("shift").annotate(
-            avg_efficiency=Avg("efficiency"),
+            avg_efficiency=Avg(EFFICIENCY_EXPR),
             total_maize=Sum("maize_milled_kg"),
             total_waste=Sum("waste_kg"),
         )
@@ -506,10 +514,20 @@ class MillingDashboardView(APIView):
     def get(self, request):
         today = datetime.today().date()
 
-        start_date = parse_date(request.GET.get("start_date")) or (
-            today - timedelta(days=30)
-        )
-        end_date = parse_date(request.GET.get("end_date")) or today
+
+        start_param = request.GET.get("start_date")
+        end_param = request.GET.get("end_date")
+
+        start_date = parse_date(start_param) if isinstance(start_param, str) else None
+        end_date = parse_date(end_param) if isinstance(end_param, str) else None
+
+        # Default range → last 30 days
+        if not start_date:
+            start_date = date.today() - timedelta(days=30)
+
+        if not end_date:
+            end_date = date.today()
+
 
         qs = MillingBatch.objects.filter(date__range=[start_date, end_date])
 
@@ -519,23 +537,28 @@ class MillingDashboardView(APIView):
         totals = qs.aggregate(
             total_maize=Sum("maize_milled_kg"),
             total_output=Sum("total_output_kg"),
-            avg_efficiency=Avg("efficiency"),
             total_waste=Sum("waste_kg"),
+
+            
         )
 
         total_maize = totals["total_maize"] or 0
+        total_output = totals.get("total_output") or 0
         total_waste = totals["total_waste"] or 0
 
         waste_ratio = (
             (total_waste / total_maize) * 100 if total_maize else 0
         )
 
+        efficiency = round((total_output / total_maize) * 100, 2) if total_maize else 0
+
         summary = {
             "total_maize": total_maize,
             "total_output": totals["total_output"] or 0,
-            "avg_efficiency": round(totals["avg_efficiency"] or 0, 2),
+            "efficiency": efficiency,
             "total_waste": total_waste,
             "waste_ratio": round(waste_ratio, 2),
+        
         }
 
         # =====================================================
@@ -544,7 +567,7 @@ class MillingDashboardView(APIView):
         daily_efficiency = qs.annotate(
             day=TruncDay("date")
         ).values("day").annotate(
-            avg_efficiency=Avg("efficiency")
+            avg_efficiency=Avg(EFFICIENCY_EXPR)
         ).order_by("day")
 
         daily_efficiency_data = [
@@ -562,7 +585,7 @@ class MillingDashboardView(APIView):
             month=TruncMonth("date")
         ).values("month").annotate(
             total_maize=Sum("maize_milled_kg"),
-            avg_efficiency=Avg("efficiency"),
+            avg_efficiency=Avg(EFFICIENCY_EXPR),
         ).order_by("month")
 
         monthly_data = [
@@ -599,7 +622,7 @@ class MillingDashboardView(APIView):
         # SHIFT RANKING
         # =====================================================
         shift_stats = qs.values("shift").annotate(
-            avg_efficiency=Avg("efficiency"),
+            avg_efficiency=Avg(EFFICIENCY_EXPR),
             total_maize=Sum("maize_milled_kg"),
             total_waste=Sum("waste_kg"),
         )

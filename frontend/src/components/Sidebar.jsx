@@ -65,6 +65,18 @@ const Sidebar = () => {
           path: "/production/analytics",
           module: "production",
         },
+
+        {
+          name: "Milling Dashboard",
+          path: "/milling/dashboard",
+          module:"production"
+        },
+        {
+          name:"Milling List",
+          path:"/milling/millinglist",
+          module:"production"
+        }
+
       ],
     },
     {

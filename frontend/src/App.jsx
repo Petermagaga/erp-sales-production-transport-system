@@ -49,6 +49,9 @@ import PendingUsers from "./pages/admin/PendingUsers";
 import Users from "./pages/admin/Users";
 import AuditLogs from "./pages/admin/AuditLogs";
 
+import MillingDashboard from "./pages/milling/MillingDashboard";
+import MillingList from "./pages/milling/MillingList";
+import AddMilling from "./pages/milling/AddMilling";
 import ExecutiveDashboard from "./pages/executive/ExecutiveDashboard";
 
 function App() {
@@ -193,6 +196,12 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            <Route path="/milling/dashboard" element={<MillingDashboard />} />
+            <Route path="/milling/millinglist" element={<MillingList />} />
+            <Route path="/milling/add" element={<AddMilling />} />
+
+
             <Route
               path="addwarehouse"
               element={
@@ -201,6 +210,9 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+
+
             <Route
               path="warehouseanalytics"
               element={

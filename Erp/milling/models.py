@@ -28,10 +28,8 @@ class MillingBatch(models.Model):
     batch_no=models.CharField(max_length=78,unique=True,db_index=True)
     expiry_date=models.DateField()
 
-
     premix_kg=models.FloatField(default=0)
     maize_milled_kg=models.FloatField(default=0,validators=[MinValueValidator(0)])
-
 
     maize_germ_kg =models.FloatField(default=0,validators=[MinValueValidator(0)])
     maize_chaffs_kg =models.FloatField(default=0,validators=[MinValueValidator(0)])
@@ -48,30 +46,30 @@ class MillingBatch(models.Model):
     total_output_kg =models.FloatField(default=0,editable=False)
     objects= CompanyQuerySet.as_manager()
 
-def save(self, *args, **kwargs):
-    """
-    Auto-calculate total output and efficiency.
-    """
+    def save(self, *args, **kwargs):
+        """
+        Auto-calculate total output and efficiency.
+        """
 
-    # ✅ Total output
-    self.total_output_kg = (
-        self.maize_chaffs_kg +
-        self.maize_germ_kg +
-        self.waste_kg
-    )
+        # ✅ Total output
+        self.total_output_kg = (
+            self.maize_chaffs_kg +
+            self.maize_germ_kg +
+            self.waste_kg
+        )
 
-    # ✅ Efficiency calculation
-    try:
-        if self.maize_milled_kg > 0:
-            produced_kg = self.bales * 25   # assuming 25kg per bale
-            self.efficiency = (produced_kg / self.maize_milled_kg) * 100
-        else:
+        # ✅ Efficiency calculation
+        try:
+            if self.maize_milled_kg > 0:
+                produced_kg = self.bales * 25   # assuming 25kg per bale
+                self.efficiency = (produced_kg / self.maize_milled_kg) * 100
+            else:
+                self.efficiency = 0
+        except Exception as e:
+            print(f"⚠️ Efficiency calculation error: {e}")
             self.efficiency = 0
-    except Exception as e:
-        print(f"⚠️ Efficiency calculation error: {e}")
-        self.efficiency = 0
 
-    super().save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.batch_no} | {self.date} | {self.shift}"
