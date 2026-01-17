@@ -44,7 +44,7 @@ const MillingDashboard = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen space-y-6">
       <h1 className="text-3xl font-bold text-green-700">
-        📊 Milling Dashboard
+        📊 Malkia Dashboard
       </h1>
 
       {/* ================= KPI CARDS ================= */}
