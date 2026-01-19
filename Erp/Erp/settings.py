@@ -82,10 +82,12 @@ MIDDLEWARE = [
     "auditt.middleware.CurrentUserMiddleware",
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "https://erpUnibrain.com",
+CSRF_TRUSTED_ORIGINS = [
+    "https://brown-have-stress-practitioners.trycloudflare.com",
     "https://*.trycloudflare.com",
+    "https://unibrainerp-rlp4.onrender.com",
 ]
+
 
 CORS_ALLOW_CREDENTIALS = True
 

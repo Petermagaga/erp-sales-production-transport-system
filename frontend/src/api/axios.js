@@ -7,7 +7,8 @@ const isLocalFrontend =
 
 const API_BASE_URL = isLocalFrontend
   ? "http://127.0.0.1:8000/api/"
-  : "https://rica-native-demand-determined.trycloudflare.com/api/";
+  :  "https://brown-have-stress-practitioners.trycloudflare.com/api/";
+
 
 const API = axios.create({
   baseURL: API_BASE_URL,
