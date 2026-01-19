@@ -20,14 +20,15 @@ if not DEBUG:
 
 
 ALLOWED_HOSTS = [
-    config("RENDER_EXTERNAL_HOSTNAME", default=""),
     "localhost",
     "127.0.0.1",
-    ".trycloudflare.com",
+    "gel-telling-spaces-cargo.trycloudflare.com",
 ]
 
+
 CSRF_TRUSTED_ORIGINS = [
-    "https://*.trycloudflare.com",
+    "gel-telling-spaces-cargo.trycloudflare.com",
+    "https://unibrainerp-rlp4.onrender.com",
 ]
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -81,7 +82,11 @@ MIDDLEWARE = [
     "auditt.middleware.CurrentUserMiddleware",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://erpUnibrain.com",
+    "https://*.trycloudflare.com",
+]
+
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
@@ -132,8 +137,17 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-if config("RENDER", default=False, cast=bool):
-    DATABASES = {
+DATABASES = {
+    "default": dj_database_url.config(
+        default=config("DATABASE_URL"),
+        conn_max_age=600,
+    )
+}
+
+
+
+"""if config("RENDER", default=False, cast=bool):
+  #  DATABASES = {
         "default": dj_database_url.config(
             default=config("DATABASE_URL"),
             conn_max_age=600,
@@ -151,7 +165,7 @@ else:
             "PORT": config("DB_PORT", default="5432"),
         }
     }
-
+"""
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
