@@ -22,7 +22,7 @@ if not DEBUG:
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    "gel-telling-spaces-cargo.trycloudflare.com",
+    ".trycloudflare.com",
 ]
 
 
@@ -70,29 +70,34 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    "core.middleware.CurrentRequestMiddleware",
+
+    
     
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    
     'django.middleware.csrf.CsrfViewMiddleware',
+    
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
+    "core.middleware.CurrentRequestMiddleware",
     "auditt.middleware.CurrentUserMiddleware",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://brown-have-stress-practitioners.trycloudflare.com",
-    "https://*.trycloudflare.com",
     "https://unibrainerp-rlp4.onrender.com",
 ]
+CORS_ALLOW_ALL_ORIGINS = False
 
-
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = False
 
 CORS_ALLOWED_ORIGINS = [
-    "https://erpUnibrain.com",
+     "https://unibrainerp-rlp4.onrender.com",
 ]
 
 AUTH_USER_MODEL = 'accounts.User'

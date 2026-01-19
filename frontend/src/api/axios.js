@@ -12,7 +12,7 @@ const API_BASE_URL = isLocalFrontend
 
 const API = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // important for Django
+ 
 });
 
 // Attach token automatically

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.views.decorators.csrf import csrf_exempt
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenRefreshView
 from accounts.views import MyTokenObtainPairView
@@ -14,7 +15,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # 🔐 Auth endpoints
-    path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/', csrf_exempt(MyTokenObtainPairView.as_view()), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # 👤 User-related endpoints (register, profile, etc.)
