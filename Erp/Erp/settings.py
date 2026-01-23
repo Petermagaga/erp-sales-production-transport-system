@@ -18,6 +18,10 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_SSL_REDIRECT = True
 
+if DEBUG:
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
+
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -97,7 +101,13 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = False
 
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
      "https://unibrainerp-rlp4.onrender.com",
+]
+CORS_ALLOW_HEADERS = [
+    "authorization",
+    "content-type",
 ]
 
 AUTH_USER_MODEL = 'accounts.User'
