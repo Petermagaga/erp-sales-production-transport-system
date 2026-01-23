@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-
+from django.db import transaction
 from django.db.models import Sum
 from django.db.models.functions import TruncWeek
 from django.utils.dateparse import parse_date
@@ -38,8 +38,19 @@ class RawMaterialViewSet(viewsets.ModelViewSet):
         log_action(self.request, "CREATE", instance)
 
     def perform_update(self, serializer):
-        instance = serializer.save()
-        log_action(self.request, "UPDATE", instance)
+        instance = self.get_object()
+        old_data = RawMaterialSerializer(instance).data
+
+        updated = serializer.save()
+        new_data = RawMaterialSerializer(updated).data
+
+        log_action(
+            self.request,
+            "update",
+            updated,
+            old_data=old_data,
+            new_data=new_data
+        )
 
     def perform_destroy(self, instance):
         log_action(self.request, "DELETE", instance)
@@ -87,7 +98,8 @@ class ProductionAnalyticsView(APIView):
     def get(self, request):
         today = datetime.today().date()
 
-        start_date = parse_date(request.GET.get("start_date")) or (
+        start_date_param=request.GET.get("start_date")
+        start_date = parse_date(start_date_param)if start_date_param else (
             today - timedelta(days=30)
         )
         end_date = parse_date(request.GET.get("end_date")) or today
@@ -226,25 +238,24 @@ class ProductionCreateView(APIView):
     permission_classes = [ModulePermission]
     module_name = "production"
 
+
+
     def post(self, request):
-        raw_serializer = RawMaterialSerializer(
-            data=request.data.get("raw")
+        with transaction.atomic():
+            raw_serializer = RawMaterialSerializer(data=request.data.get("raw"))
+            raw_serializer.is_valid(raise_exception=True)
+            raw_instance = raw_serializer.save()
+
+            flour_serializer = FlourOutputSerializer(data=request.data.get("flour"))
+            flour_serializer.is_valid(raise_exception=True)
+            flour_serializer.save()
+
+            log_action(request, "create", raw_instance)
+
+        return Response(
+            {"raw": raw_serializer.data, "flour": flour_serializer.data},
+            status=status.HTTP_201_CREATED
         )
-        raw_serializer.is_valid(raise_exception=True)
-        raw_instance = raw_serializer.save()
-
-        flour_serializer = FlourOutputSerializer(
-            data=request.data.get("flour")
-        )
-        flour_serializer.is_valid(raise_exception=True)
-        flour_serializer.save()
-
-        log_action(request, "CREATE", raw_instance)
-
-        return Response({
-            "raw": raw_serializer.data,
-            "flour": flour_serializer.data,
-        }, status=status.HTTP_201_CREATED)
 
 
 # =====================================================

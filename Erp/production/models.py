@@ -56,19 +56,24 @@ class FlourOutput(models.Model):
     efficiency=models.FloatField(null=True,blank=True,default=0)
 
     def save(self, *args, **kwargs):
-        # import here to avoid circular import
         from .models import RawMaterial
 
         try:
-            raw = RawMaterial.objects.filter(date=self.date, shift=self.shift).first()
+            raw = RawMaterial.objects.filter(
+                date=self.date,
+                shift=self.shift
+            ).first()
+
             if raw and raw.total_raw_material > 0:
-                self.efficiency_rate = (self.total_bags * 25 / raw.total_raw_material) * 100
+                self.efficiency = (
+                    self.total_bags * 25 / raw.total_raw_material
+                ) * 100
             else:
-                self.efficiency_rate = None
+                self.efficiency = None
+
         except Exception as e:
             print(f"⚠️ Efficiency calculation error: {e}")
 
-        # ✅ call the actual parent save() to store it — not self.save()
         super().save(*args, **kwargs)
 
     def __str__(self):

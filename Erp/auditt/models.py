@@ -3,6 +3,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
+
 class AuditLog(models.Model):
     ACTION_CHOICES = (
         ("create", "Create"),
@@ -20,21 +21,21 @@ class AuditLog(models.Model):
         on_delete=models.SET_NULL
     )
 
-    model_name = models.CharField(max_length=100)  # ✅ ADD
-    object_id = models.CharField(max_length=50)
-
-    old_data = models.JSONField(null=True, blank=True)  # ✅ ADD
-    new_data = models.JSONField(null=True, blank=True)  # ✅ ADD
-    object_name=models.CharField(max_length=100,blank=True,null=True)
-
+    # What happened
     action = models.CharField(max_length=20, choices=ACTION_CHOICES)
-    module = models.CharField(max_length=50)
+    module = models.CharField(max_length=50)        # e.g. "production"
+    model_name = models.CharField(max_length=100)   # e.g. "RawMaterial"
 
-    # Generic relation (ANY model)
+    # Generic relation
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey()
 
+    # Optional metadata
+    object_name = models.CharField(max_length=100, blank=True, null=True)
+
+    old_data = models.JSONField(null=True, blank=True)
+    new_data = models.JSONField(null=True, blank=True)
     changes = models.JSONField(null=True, blank=True)
 
     ip_address = models.GenericIPAddressField(null=True, blank=True)
@@ -46,4 +47,4 @@ class AuditLog(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.module} | {self.action} | {self.object_id}"
+        return f"{self.module} | {self.model_name} | {self.action} | {self.object_id}"
