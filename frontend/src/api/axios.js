@@ -23,5 +23,21 @@ API.interceptors.request.use((config) => {
   }
   return config;
 });
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.warn("🔐 Token expired or invalid. Logging out.");
 
+      localStorage.removeItem("access");
+      localStorage.removeItem("refresh");
+
+      // optional: prevent infinite redirect loop
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 export default API;
