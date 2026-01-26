@@ -24,20 +24,27 @@ API.interceptors.request.use((config) => {
   return config;
 });
 API.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      console.warn("🔐 Token expired or invalid. Logging out.");
+  res => res,
+  err => {
+    const status = err.response?.status;
+    const detail = err.response?.data?.detail || "";
+
+    if (
+      status === 401 &&
+      detail.toLowerCase().includes("token")
+    ) {
+      console.warn("🔐 Token expired. Logging out.");
 
       localStorage.removeItem("access");
       localStorage.removeItem("refresh");
 
-      // optional: prevent infinite redirect loop
       if (window.location.pathname !== "/login") {
         window.location.href = "/login";
       }
     }
-    return Promise.reject(error);
+
+    return Promise.reject(err);
   }
 );
+
 export default API;

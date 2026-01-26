@@ -1,67 +1,67 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.exceptions import PermissionDenied
 
 class ModulePermission(BasePermission):
-    """
-    Hybrid Permission:
-    - Admin: full access everywhere
-    - Role-based access inside module
-    - Read-only outside own module
-    """
-
     MODULE_ROLES = {
         "transport": ["admin", "transporter"],
         "warehouse": ["admin", "warehouse"],
         "sales": ["admin", "sales"],
         "marketing": ["admin", "marketing"],
+        "milling": ["admin", "production"],   # ✅ ADD THIS
+        "production": ["admin", "production"],
     }
 
     def has_permission(self, request, view):
         user = request.user
 
-        # Must be authenticated
+        # 🔐 Authentication check → 401
         if not user or user.is_anonymous:
             return False
 
-        # Admin bypasses restrictions
+        # 👑 Admin full access
         if user.is_superuser or user.role == "admin":
             return True
 
-        # View must set a module_name e.g. "sales"
         module = getattr(view, "module_name", None)
         if not module:
-            return False
+            raise PermissionDenied("Module not defined")
 
-        # Roles allowed to fully modify this module
-        allowed_roles = self.MODULE_ROLES.get(module, [])
+        allowed_roles = self.MODULE_ROLES.get(module)
 
-        # Allow read-only access for everyone
+        if allowed_roles is None:
+            raise PermissionDenied(f"No permissions configured for module '{module}'")
+
+        # 👀 Read-only allowed
         if request.method in SAFE_METHODS:
             return True
 
-        if request.method == "DELETE" and user.role != "admin":
-            return False
-        # Only module owners can write
-        return user.role in allowed_roles
+        # 🧨 Delete protection
+        if request.method == "DELETE":
+            raise PermissionDenied("Only admins can delete")
 
+        # ✍️ Write permission
+        if user.role not in allowed_roles:
+            raise PermissionDenied("You do not have permission to modify this module")
+
+        return True
 
 class IsownerOrAdmin(BasePermission):
     """
-     Object-level permission:
-    - Admin: full access
-    - Owner: edit/delete
-    - Others: read-only   
-    
+    object-level permission:
+    -Admin: full access
+    Owner: edit/delete
+    Others: read-only   
     """
-
     def has_object_permission(self,request,view,obj):
-        user = request.user
-
-        if user.is_superuser or user.role == "admin":
+        user=request.user
+        
+        if user.is_superuser or user.role =="admin":
             return True
-        if  request.method in SAFE_METHODS:
+        if request.method in SAFE_METHODS:
             return True
         
-        return hasattr(obj,"created_by") and obj.created_by == user
+        return hasattr(obj,"created_by") and obj.created_by ==user
+
 
 
 class AdminDeleteOnly(BasePermission):
