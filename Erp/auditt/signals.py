@@ -23,14 +23,21 @@ def capture_before_update(sender, instance, **kwargs):
 
 @receiver(post_save)
 def log_save(sender, instance, created, **kwargs):
-    if sender.__name__ in ["AuditLog"]:
+    if sender is AuditLog:
+        return
+
+    ct = ContentType.objects.get_for_model(sender, for_concrete_model=True)
+    if not ct:
         return
 
     user = get_current_user()
+    if user and not user.is_authenticated:
+        user = None
+
     action = "create" if created else "update"
 
     changes = None
-    if hasattr(instance, "_old_data"):
+    if hasattr(instance, "_old_data") and instance._old_data:
         new_data = serialize_instance(instance)
         changes = {
             k: {"from": instance._old_data.get(k), "to": new_data.get(k)}
@@ -41,24 +48,30 @@ def log_save(sender, instance, created, **kwargs):
     AuditLog.objects.create(
         user=user,
         action=action,
-        module=instance._meta.app_label,
-        content_type=ContentType.objects.get_for_model(instance),
+        module=sender._meta.app_label,
+        content_type=ct,
         object_id=instance.pk,
         changes=changes,
     )
 
 @receiver(post_delete)
 def log_delete(sender, instance, **kwargs):
-    if sender.__name__ in ["AuditLog"]:
+    if sender is AuditLog:
+        return
+
+    ct = ContentType.objects.get_for_model(sender, for_concrete_model=True)
+    if not ct:
         return
 
     user = get_current_user()
+    if user and not user.is_authenticated:
+        user = None
 
     AuditLog.objects.create(
         user=user,
         action="delete",
-        module=instance._meta.app_label,
-        content_type=ContentType.objects.get_for_model(instance),
+        module=sender._meta.app_label,
+        content_type=ct,
         object_id=instance.pk,
         changes=serialize_instance(instance),
     )
