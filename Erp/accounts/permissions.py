@@ -1,5 +1,7 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.exceptions import PermissionDenied
 
 class ModulePermission(BasePermission):
     MODULE_ROLES = {
@@ -7,7 +9,7 @@ class ModulePermission(BasePermission):
         "warehouse": ["admin", "warehouse"],
         "sales": ["admin", "sales"],
         "marketing": ["admin", "marketing"],
-        "milling": ["admin", "production"],   # ✅ ADD THIS
+        "milling": ["admin", "milling"],   # ✅ ADD THIS
         "production": ["admin", "production"],
     }
 
@@ -103,3 +105,66 @@ class ApprovalWorkflowPermission(BasePermission):
 
         # Pending or Approved → no edits
         return False
+
+
+
+class BaseModulePermission(BasePermission):
+    """
+    🔐 Smart module permission system
+
+    - Admin: full access
+    - Read-only for authenticated users
+    - Write access based on module → role mapping
+    - NEVER returns 401 for permission errors
+    """
+
+    MODULE_ROLES = {
+        "sales": ["admin", "sales"],
+        "warehouse": ["admin", "warehouse"],
+        "production": ["admin", "production"],
+        "milling": ["admin", "milling"],
+        "transport": ["admin", "transporter"],
+        "marketing": ["admin", "marketing"],
+    }
+
+    def has_permission(self, request, view):
+        user = request.user
+
+        # 🔐 Authentication check → 401
+        if not user or user.is_anonymous:
+            return False
+
+        # 👑 Admin override
+        if user.is_superuser or user.role == "admin":
+            return True
+
+        # 🔍 Auto-detect module
+        module = getattr(view, "module_name", None)
+
+        if not module:
+            # Missing module should NEVER break auth
+            raise PermissionDenied("Module not specified for this endpoint")
+
+        allowed_roles = self.MODULE_ROLES.get(module)
+
+        if not allowed_roles:
+            # Module not configured → safe failure
+            raise PermissionDenied(
+                f"Access rules not configured for module '{module}'"
+            )
+
+        # 👀 Read-only always allowed
+        if request.method in SAFE_METHODS:
+            return True
+
+        # ❌ Delete locked to admin
+        if request.method == "DELETE":
+            raise PermissionDenied("Only admins may delete records")
+
+        # ✍️ Write access
+        if user.role not in allowed_roles:
+            raise PermissionDenied(
+                f"Role '{user.role}' cannot modify '{module}' module"
+            )
+
+        return True
