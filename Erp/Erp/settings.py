@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     "dashboards",
     "billing",
     "milling",
+    "audit.apps.AuditConfig",
 ]
 
 MIDDLEWARE = [
