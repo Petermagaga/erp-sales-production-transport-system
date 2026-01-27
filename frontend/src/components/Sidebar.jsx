@@ -67,12 +67,12 @@ const Sidebar = () => {
         },
 
         {
-          name: "Milling Dashboard",
+          name: "Malkia Dashboard",
           path: "/milling/dashboard",
           module:"production"
         },
         {
-          name:"Milling List",
+          name:"Malkia List",
           path:"/milling/millinglist",
           module:"production"
         }
