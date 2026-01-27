@@ -4,6 +4,7 @@ from django.utils.dateparse import parse_date
 from django.utils.timezone import now
 from datetime import datetime, timedelta
 
+from django.db.models import Sum, Q 
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -48,80 +49,19 @@ class TransportRecordViewSet(viewsets.ModelViewSet):
     )
     serializer_class = TransportRecordSerializer
 
-    permission_classes = [ModulePermission, AdminDeleteOnly,IsownerOrAdmin,ApprovalWorkflowPermission,]
+    permission_classes = [
+        ModulePermission,
+        AdminDeleteOnly,
+        IsownerOrAdmin,
+        ApprovalWorkflowPermission,
+    ]
     module_name = "transport"
 
     # -------------------------------
-    # FILTERING
+    # QUERYSET (FILTERING)
     # -------------------------------
-
-    def perform_create(self,serializer):
-        serializer.save(created_by=self.request.user)
-
-    def perform_update(self, serializer):
-        record = self.get_object()
-
-        if is_period_locked(company=record.company, date=record.date):
-            raise PermissionDenied("This period is locked. Cannot edit.")
-
-        serializer.save()
-
-    def submit(self, request, pk=None):
-        record = self.get_object()
-
-        if record.created_by != request.user:
-            return Response(
-                {"detail": "Only owner can submit"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        record.status = "pending"
-        record.save()
-
-        notify_role(
-            role="transporter",
-            company=record.company,
-            title="Transport record pending approval",
-            message=f"Transport record #{record.id} was submitted for approval.",
-            module="transport",
-            object_id=record.id,
-        )
-
-
-        return Response({"status": "submitted for approval"})
-
-    # ✅ APPROVE (Admin / Manager)
-    @action(detail=True, methods=["post"])
-    def approve(self, request, pk=None):
-        if request.user.role not in ["admin", "transporter"]:
-            return Response(
-                {"detail": "Not authorized"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        record = self.get_object()
-        record.status = "approved"
-        record.approved_by = request.user
-        record.approved_at = now()
-        record.save()
-
-        notify_user(
-            user=record.created_by,
-            company=record.company,
-            title="Transport record approved",
-            message=f"Your transport record #{record.id} has been approved. ",
-            notification_type="success",
-            module="transport",
-            object_id=record.id,
-        )
-
-        if is_period_locked(company=record.company, date=record.date):
-            raise PermissionDenied("Cannot approve record in locked period.")
-
-        return Response({"status": "approved"})
-
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = TransportRecord.objects.for_user(self.request.user)
 
         vehicle_id = self.request.query_params.get("vehicle")
         start = self.request.query_params.get("start_date")
@@ -142,131 +82,61 @@ class TransportRecordViewSet(viewsets.ModelViewSet):
 
         return qs
 
-    def get_queryset(self):
-        return TransportRecord.objects.for_user(self.request.user)
-
     # -------------------------------
     # ANALYTICS (READ-ONLY)
     # -------------------------------
-
     @action(detail=False, methods=["get"])
     def analytics(self, request):
-        """
-        Transport cost analytics (read-only)
-        """
-
         start_param = request.query_params.get("start_date")
         end_param = request.query_params.get("end_date")
-        vehicle_param = request.query_params.get("vehicle")
 
         start_date = (
             parse_date(start_param)
             if start_param
             else (datetime.today() - timedelta(days=30)).date()
         )
-
         end_date = (
             parse_date(end_param)
             if end_param
             else datetime.today().date()
         )
 
-        records = TransportRecord.objects.filter(
+        records = TransportRecord.objects.for_user(request.user).filter(
             date__range=[start_date, end_date]
         )
-
-        if vehicle_param:
-            records = records.filter(vehicle__id=vehicle_param)
-
-        # -------------------------------
-        # TOTALS
-        # -------------------------------
 
         totals = records.aggregate(
             total_fuel=Sum("fuel_cost"),
             total_service=Sum("service_cost"),
         )
 
-        total_fuel = float(totals["total_fuel"] or 0)
-        total_service = float(totals["total_service"] or 0)
-
         # -------------------------------
-        # DAILY TRENDS
+        # VEHICLE TOTALS (ALL VEHICLES)
         # -------------------------------
-
-        daily_qs = (
-            records
-            .annotate(day=TruncDay("date"))
-            .values("day")
+        vehicles_qs = (
+            Vehicle.objects
             .annotate(
-                fuel=Sum("fuel_cost"),
-                service=Sum("service_cost"),
+                fuel=Sum(
+                    "records__fuel_cost",
+                    filter=Q(records__date__range=[start_date, end_date])
+                ),
+                service=Sum(
+                    "records__service_cost",
+                    filter=Q(records__date__range=[start_date, end_date])
+                ),
             )
-            .order_by("day")
-        )
-
-        daily_data = [
-            {
-                "date": d["day"].strftime("%Y-%m-%d"),
-                "fuel": float(d["fuel"] or 0),
-                "service": float(d["service"] or 0),
-            }
-            for d in daily_qs
-        ]
-
-        # -------------------------------
-        # MONTHLY TRENDS
-        # -------------------------------
-
-        monthly_qs = (
-            records
-            .annotate(month=TruncMonth("date"))
-            .values("month")
-            .annotate(
-                fuel=Sum("fuel_cost"),
-                service=Sum("service_cost"),
-            )
-            .order_by("month")
-        )
-
-        monthly_trends = [
-            {
-                "month": m["month"].strftime("%Y-%m"),
-                "fuel": float(m["fuel"] or 0),
-                "service": float(m["service"] or 0),
-                "total": float(m["fuel"] or 0) + float(m["service"] or 0),
-            }
-            for m in monthly_qs
-        ]
-
-        # -------------------------------
-        # VEHICLE TOTALS
-        # -------------------------------
-
-        vehicle_qs = (
-            records
-            .values(
-                "vehicle__id",
-                "vehicle__plate_number",
-                "vehicle__name",
-            )
-            .annotate(
-                fuel=Sum("fuel_cost"),
-                service=Sum("service_cost"),
-            )
-            .order_by("-fuel", "-service")
         )
 
         vehicle_totals = [
             {
-                "vehicle_id": v["vehicle__id"],
-                "plate_number": v["vehicle__plate_number"],
-                "name": v["vehicle__name"],
-                "fuel": float(v["fuel"] or 0),
-                "service": float(v["service"] or 0),
-                "total": float(v["fuel"] or 0) + float(v["service"] or 0),
+                "vehicle_id": v.id,
+                "plate_number": v.plate_number,
+                "name": v.name,
+                "fuel": float(v.fuel or 0),
+                "service": float(v.service or 0),
+                "total": float((v.fuel or 0) + (v.service or 0)),
             }
-            for v in vehicle_qs
+            for v in vehicles_qs
         ]
 
         top_vehicles = sorted(
@@ -277,12 +147,13 @@ class TransportRecordViewSet(viewsets.ModelViewSet):
 
         return Response({
             "summary": {
-                "total_fuel": total_fuel,
-                "total_service": total_service,
-                "total_cost": total_fuel + total_service,
+                "total_fuel": float(totals["total_fuel"] or 0),
+                "total_service": float(totals["total_service"] or 0),
+                "total_cost": float(
+                    (totals["total_fuel"] or 0) +
+                    (totals["total_service"] or 0)
+                ),
             },
-            "daily_data": daily_data,
-            "monthly_trends": monthly_trends,
             "vehicle_totals": vehicle_totals,
             "top_vehicles": top_vehicles,
         })

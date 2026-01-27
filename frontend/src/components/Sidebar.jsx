@@ -59,9 +59,9 @@ const Sidebar = () => {
       icon: Package,
       module: "production",
       children: [
-        { name: "Production List", path: "/production", module: "production" },
+        { name: "NacoNek List", path: "/production", module: "production" },
         {
-          name: "Production Analytics",
+          name: "NacoNek Analytics",
           path: "/production/analytics",
           module: "production",
         },
