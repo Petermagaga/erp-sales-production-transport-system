@@ -98,7 +98,7 @@ MIDDLEWARE = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://brown-have-stress-practitioners.trycloudflare.com",
+    "https://fresh-merely-randy-segment.trycloudflare.com",
     "https://unibrainerp-rlp4.onrender.com",
 ]
 CORS_ALLOW_ALL_ORIGINS = False
