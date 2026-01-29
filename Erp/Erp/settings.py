@@ -77,22 +77,19 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
 
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 
-    
-    
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    
-    'django.middleware.csrf.CsrfViewMiddleware',
-    
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",   # ✅ MUST be here
+    "django.middleware.csrf.CsrfViewMiddleware",
+
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
     "core.middleware.CurrentRequestMiddleware",
     "auditt.middleware.CurrentUserMiddleware",
 ]
@@ -110,10 +107,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
      "https://unibrainerp-rlp4.onrender.com",
 ]
-CORS_ALLOW_HEADERS = [
-    "authorization",
-    "content-type",
-]
+CORS_ALLOW_HEADERS = True
 
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -124,6 +118,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny",
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ],
     "DEFAULT_FILTER_BACKENDS": [
