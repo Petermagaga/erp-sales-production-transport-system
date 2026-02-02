@@ -65,5 +65,21 @@ class LeaveRequest(models.Model):
 
 class LeaveBalance(models.Model):
     company=models.ForeignKey(Company,on_delete=models.CASCADE)
-    user=models.ForeignKey(settings.AUTH_USER_MODEL,)
+    user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
+    leave_type=models.ForeignKey(LeaveType,on_delete=models.CASCADE)
+
+    earned_days = models.PositiveIntegerField(default=0)
+    used_days=models.PositiveIntegerField(default=0)
+    class Meta:
+        unique_together =("user","leave_type")
+
+    @property
+    def remaining_days(self):
+        return self.earned_days -self.used_days
+    
+    def __str__(self):
+        return f"{self.user} - {self.leave_type.name}: {self.remaining_days}"
+    
+
+    
 

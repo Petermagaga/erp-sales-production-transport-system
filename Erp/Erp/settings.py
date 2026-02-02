@@ -48,6 +48,7 @@ else:
 INSTALLED_APPS = [
     "drf_spectacular",
     'jazzmin',
+    "leave",
 
     'django.contrib.admin',
     'django.contrib.auth',
