@@ -9,8 +9,9 @@ class ModulePermission(BasePermission):
         "warehouse": ["admin", "warehouse"],
         "sales": ["admin", "sales"],
         "marketing": ["admin", "marketing"],
-        "milling": ["admin", "milling"],   # ✅ ADD THIS
+        "milling": ["admin", "milling"],   
         "production": ["admin", "production"],
+        "leave":["admin","hr"],
     }
 
     def has_permission(self, request, view):
