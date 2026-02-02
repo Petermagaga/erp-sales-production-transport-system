@@ -95,7 +95,7 @@ MIDDLEWARE = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://fresh-merely-randy-segment.trycloudflare.com",
+    "https://entity-dozens-nokia-here.trycloudflare.com",
     "https://unibrainerp-rlp4.onrender.com",
 ]
 CORS_ALLOW_ALL_ORIGINS = False
@@ -103,11 +103,12 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = False
 
 CORS_ALLOWED_ORIGINS = [
+
+     "https://unibrainerp-rlp4.onrender.com",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-     "https://unibrainerp-rlp4.onrender.com",
 ]
-CORS_ALLOW_HEADERS = True
+CORS_ALLOW_ALLHEADERS = True
 
 AUTH_USER_MODEL = 'accounts.User'
 

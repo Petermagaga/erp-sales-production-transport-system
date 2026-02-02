@@ -7,7 +7,7 @@ const isLocalFrontend =
 
 const API_BASE_URL = isLocalFrontend
   ? "http://127.0.0.1:8000/api/"
-  :  "https://fresh-merely-randy-segment.trycloudflare.com/api";
+  :  "https://fresh-merely-randy-segment.trycloudflare.com/api/";
 
 
 const API = axios.create({
