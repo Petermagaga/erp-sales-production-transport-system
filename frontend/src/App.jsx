@@ -285,7 +285,15 @@ function App() {
           }
         />
 
+          <Route
+          path="/leave"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "hr", "sales", "marketing", "warehouse", "transport", "production", "milling"]}>
+              <MyLeave/>
+            </ProtectedRoute>
 
+          }
+          />
 
         </Routes>
 

@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronRight,
   MegaphoneIcon,
+  LeafIcon,
 } from "lucide-react";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,6 +45,27 @@ const Sidebar = () => {
       icon: LayoutDashboard,
       module: "dashboard",
     },
+
+    {
+      name: "Leave",
+      icon: LeafIcon,
+      module: "leave",
+      children: [
+        {
+          name: "My Leave",
+          path: "/leave",
+          module: "leave",
+        },
+        {
+          name: "Manage Leave",
+          path: "/leave/manage",
+          module: "leave",
+          role: "hr",
+        },
+      ],
+    },
+    
+
     {
       name: "Sales & Marketing",
       icon: MegaphoneIcon,
