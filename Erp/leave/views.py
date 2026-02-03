@@ -21,7 +21,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user=self.request.user
 
-        if user.IsownerOrAdmin() or user.is_superuser:
+        if user.role or user.is_superuser:
             return LeaveRequest.objects.filter(company=user.company)
         
         return LeaveRequest.objects.filter(user=user)

@@ -57,11 +57,12 @@ const Sidebar = () => {
           module: "leave",
         },
         {
-          name: "Manage Leave",
-          path: "/leave/manage",
-          module: "leave",
-          role: "hr",
-        },
+          name:"Manage Leave",
+          path:"/leave/manage",
+          module:"leave",
+          role:"hr",
+        }
+
       ],
     },
     

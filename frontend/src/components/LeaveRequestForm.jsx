@@ -1,6 +1,6 @@
 // components/LeaveRequestForm.jsx
 import { useState } from "react";
-import axios from "../utils/axios";
+import axios from "../api/axios";
 
 export default function LeaveRequestForm() {
   const [form, setForm] = useState({

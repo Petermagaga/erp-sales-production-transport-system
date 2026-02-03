@@ -1,6 +1,6 @@
 // components/MyLeaveTable.jsx
 import { useEffect, useState } from "react";
-import axios from "../utils/axios";
+import axios from "../api/axios";
 
 export default function MyLeaveTable() {
   const [leaves, setLeaves] = useState([]);

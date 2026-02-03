@@ -23,16 +23,24 @@ API.interceptors.request.use((config) => {
   }
   return config;
 });
+
 API.interceptors.response.use(
   res => res,
   err => {
     const status = err.response?.status;
     const detail = err.response?.data?.detail || "";
 
-    if (
-      status === 401 &&
-      detail.toLowerCase().includes("token")
-    ) {
+    const tokenErrors = [
+      "token is invalid",
+      "token expired",
+      "given token not valid",
+      "not valid for any token type"
+    ];
+
+    const isTokenError =
+      tokenErrors.some(msg => detail.toLowerCase().includes(msg));
+
+    if (status === 401 && isTokenError) {
       console.warn("🔐 Token expired. Logging out.");
 
       localStorage.removeItem("access");
@@ -46,5 +54,7 @@ API.interceptors.response.use(
     return Promise.reject(err);
   }
 );
+
+
 
 export default API;

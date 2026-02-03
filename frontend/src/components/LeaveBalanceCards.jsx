@@ -1,6 +1,6 @@
 // components/LeaveBalanceCards.jsx
 import { useEffect, useState } from "react";
-import axios from "../utils/axios";
+import axios from "../api/axios";
 
 export default function LeaveBalanceCards() {
   const [balances, setBalances] = useState([]);

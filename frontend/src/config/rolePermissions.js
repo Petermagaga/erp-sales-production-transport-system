@@ -6,11 +6,13 @@ export const rolePermissions = {
     "transport",
     "warehouse",
     "marketing",
-    "admin"
+    "leave",
+    "admin",
   ],
 
   sales: ["dashboard", "sales"],
   marketing: ["dashboard", "sales", "marketing"],
   warehouse: ["dashboard", "warehouse"],
   transporter: ["dashboard", "transport"],
+  hr:["dashboard","leave"],
 };
