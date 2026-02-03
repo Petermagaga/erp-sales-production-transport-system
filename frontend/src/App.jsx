@@ -54,6 +54,8 @@ import MillingList from "./pages/milling/MillingList";
 import AddMilling from "./pages/milling/AddMilling";
 import ExecutiveDashboard from "./pages/executive/ExecutiveDashboard";
 
+import MyLeave from "./pages/MyLeave";
+
 function App() {
   return (
     <BrowserRouter>
