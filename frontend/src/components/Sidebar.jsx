@@ -16,6 +16,10 @@ import {
 } from "lucide-react";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
+
+
+
 
 const Sidebar = () => {
   const { user, canAccess } = usePermissions();
@@ -220,10 +224,6 @@ const Sidebar = () => {
 
           // role-based visibility (extra check)
 
-          // AUTO OPEN ACTIVE GROUP
-          if (groupActive && openDropdown !== item.name) {
-            setTimeout(() => setOpenDropdown(item.name), 0);
-          }
 
           if (item.children) {
             return (

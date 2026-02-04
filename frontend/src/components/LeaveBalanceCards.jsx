@@ -7,12 +7,25 @@ export default function LeaveBalanceCards() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     axios
       .get("/leave/leave-balances/")
-      .then((res) => setBalances(res.data))
-      .catch(() => setBalances([]))
-      .finally(() => setLoading(false));
+      .then((res) => {
+        if (isMounted) setBalances(res.data);
+      })
+      .catch(() => {
+        if (isMounted) setBalances([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
 
   if (loading) {
     return (
