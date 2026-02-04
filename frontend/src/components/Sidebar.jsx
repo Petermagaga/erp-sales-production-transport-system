@@ -174,6 +174,23 @@ const Sidebar = () => {
 
   ];
 
+
+  useEffect(() => {
+    const activeGroup = menuItems.find(
+      (item) =>
+        item.children &&
+        item.children.some((c) =>
+          location.pathname.startsWith(c.path)
+        )
+    );
+
+    if (activeGroup) {
+      setOpenDropdown(activeGroup.name);
+    }
+  }, [location.pathname]);
+
+  
+
   const isGroupActive = (children = []) =>
     children.some((c) => location.pathname.startsWith(c.path));
 

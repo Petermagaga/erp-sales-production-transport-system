@@ -79,6 +79,9 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="dashboard" element={<Dashboard />} />
 
+
+
+
             {/* ================= SALES MODULE ================= */}
             <Route
               path="sales"
@@ -121,6 +124,8 @@ function App() {
               }
             />
 
+              
+
             {/* ================= PRODUCTION MODULE ================= */}
             <Route
               path="production"
@@ -154,6 +159,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
 
             {/* ================= TRANSPORT MODULE ================= */}
             <Route
@@ -232,6 +238,7 @@ function App() {
               }
             />
 
+
             {/* ================= MARKETING ================= */}
             <Route
               path="campaigns"
@@ -266,6 +273,8 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+
         <Route
         path="/admin/AuditLogs"
         element={
@@ -276,6 +285,27 @@ function App() {
         />
 
 
+            {/*=========leave======*/}
+
+            <Route
+              path="/"
+              element={
+                <PrivateRoute allowedRoles={["admin", "sales", "marketing", "warehouse", "transport", "hr"]}>
+                  <DashboardLayout />
+                </PrivateRoute>
+              }
+            >
+              <Route
+                path="leave"
+                element={
+                  <ProtectedRoute module="leave">
+                    <MyLeave />
+                  </ProtectedRoute>
+                }
+              />
+            </Route>
+
+
         <Route
           path="/executive"
           element={
@@ -284,16 +314,6 @@ function App() {
             </PrivateRoute>
           }
         />
-
-          <Route
-          path="/leave"
-          element={
-            <ProtectedRoute module="leave">
-              <MyLeave/>
-            </ProtectedRoute>
-
-          }
-          />
 
         </Routes>
 
