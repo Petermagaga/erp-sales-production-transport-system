@@ -8,12 +8,32 @@ export default function LeaveRequestForm() {
     start_date: "",
     end_date: "",
     reason: "",
+
   });
 
-  const submit = async () => {
-    await axios.post("/leave/leave-requests/", form);
+const submit = async () => {
+  if (!form.leave_type || !form.start_date || !form.end_date || !form.reason) {
+    alert("Please fill in all fields 🌿");
+    return;
+  }
+  try {
+    await axios.post("/leave/leave-requests/", {
+      leave_type: Number(form.leave_type),
+      start_date: form.start_date,
+      end_date: form.end_date,
+      reason: form.reason,
+    });
+
     alert("Leave submitted successfully 🌿");
-  };
+  } catch (err) {
+    console.error("Leave request error:", err.response?.data);
+    alert(
+      err.response?.data?.detail ||
+      JSON.stringify(err.response?.data) ||
+      "Invalid leave request"
+    );
+  }
+};
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-[#009540]/20 p-6">
@@ -29,9 +49,9 @@ export default function LeaveRequestForm() {
           }
         >
           <option value="">Select Leave Type</option>
-          <option value="annual">Annual Leave</option>
-          <option value="sick">Sick Leave</option>
-          <option value="maternity">Maternity Leave</option>
+          <option value="1">Annual Leave</option>
+          <option value="2">Sick Leave</option>
+          <option value="3">Maternity Leave</option>
         </select>
 
         <input

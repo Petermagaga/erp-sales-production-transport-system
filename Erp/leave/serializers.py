@@ -13,7 +13,8 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
     
     class Meta:
         model=LeaveRequest
-        fields="__all__"
+        
+        exclude=("user","company")
         read_only_fields=(
             "status",
             "total_days",
