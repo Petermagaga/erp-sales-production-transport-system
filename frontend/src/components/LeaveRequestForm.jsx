@@ -1,5 +1,5 @@
 // components/LeaveRequestForm.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "../api/axios";
 
 export default function LeaveRequestForm() {
@@ -8,32 +8,37 @@ export default function LeaveRequestForm() {
     start_date: "",
     end_date: "",
     reason: "",
-
   });
 
-const submit = async () => {
-  if (!form.leave_type || !form.start_date || !form.end_date || !form.reason) {
-    alert("Please fill in all fields 🌿");
-    return;
-  }
-  try {
-    await axios.post("/leave/leave-requests/", {
-      leave_type: Number(form.leave_type),
-      start_date: form.start_date,
-      end_date: form.end_date,
-      reason: form.reason,
-    });
+  const [leaveTypes, setLeaveTypes] = useState([]);
 
-    alert("Leave submitted successfully 🌿");
-  } catch (err) {
-    console.error("Leave request error:", err.response?.data);
-    alert(
-      err.response?.data?.detail ||
-      JSON.stringify(err.response?.data) ||
-      "Invalid leave request"
-    );
-  }
-};
+  useEffect(() => {
+    axios
+      .get("/leave/leave-types/")
+      .then((res) => setLeaveTypes(res.data))
+      .catch(console.error);
+  }, []);
+
+  const submit = async () => {
+    if (!form.leave_type || !form.start_date || !form.end_date || !form.reason) {
+      alert("Please fill in all fields 🌿");
+      return;
+    }
+
+    try {
+      await axios.post("/leave/leave-requests/", {
+        leave_type: Number(form.leave_type),
+        start_date: form.start_date,
+        end_date: form.end_date,
+        reason: form.reason,
+      });
+
+      alert("Leave submitted successfully 🌿");
+    } catch (err) {
+      console.error("Leave request error:", err.response?.data);
+      alert(JSON.stringify(err.response?.data, null, 2));
+    }
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-[#009540]/20 p-6">
@@ -44,14 +49,17 @@ const submit = async () => {
       <div className="space-y-4">
         <select
           className="w-full border rounded-lg px-3 py-2"
+          value={form.leave_type}
           onChange={(e) =>
             setForm({ ...form, leave_type: e.target.value })
           }
         >
           <option value="">Select Leave Type</option>
-          <option value="1">Annual Leave</option>
-          <option value="2">Sick Leave</option>
-          <option value="3">Maternity Leave</option>
+          {leaveTypes.map((lt) => (
+            <option key={lt.id} value={lt.id}>
+              {lt.name}
+            </option>
+          ))}
         </select>
 
         <input

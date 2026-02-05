@@ -8,8 +8,10 @@ class LeaveTypeSerializer(serializers.ModelSerializer):
 
 class LeaveRequestSerializer(serializers.ModelSerializer):
 
-    user_name=serializers.CharField(source="user.username",read_only=True)
-    leave_type_name =serializers.CharField(source="user.username",read_only=True)
+    user_name=serializers.CharField(
+        source="user.username",read_only=True)
+    leave_type_name =serializers.CharField(
+        source="leave_type.name",read_only=True)
     
     class Meta:
         model=LeaveRequest

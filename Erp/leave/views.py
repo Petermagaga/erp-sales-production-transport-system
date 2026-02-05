@@ -3,8 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils.timezone import now
 
-from .models import LeaveRequest,LeaveBalance
-from .serializers import LeaveBalanceSerializer,LeaveRequestSerializer
+from .models import LeaveRequest,LeaveBalance,LeaveType
+from .serializers import LeaveBalanceSerializer,LeaveRequestSerializer,LeaveTypeSerializer
 from accounts.permissions import (BaseModulePermission,
                                   IsownerOrAdmin,
                                   ApprovalWorkflowPermission)
@@ -34,43 +34,43 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
             submitted_at=now(),
 
         )
-        @action(detail=True,
-                methods=["post"],
-                permission_classes=[BaseModulePermission],
-                )
-        def approve(self,request,pk=None):
-            leave= self.get_object()
+    @action(detail=True,
+            methods=["post"],
+            permission_classes=[BaseModulePermission],
+            )
+    def approve(self,request,pk=None):
+        leave= self.get_object()
 
-            if request.user.role not in ["admin","hr"] and not request.user.is_superuser:
-                return Response(
-                    {"detail":"Only HR or Admin can approve leave"},
-                    status=403,
-                )
-            leave.status="approved"
-            leave.decision_by= request.user
-            leave.decision_at =now()
-            leave.save()
+        if request.user.role not in ["admin","hr"] and not request.user.is_superuser:
+            return Response(
+                {"detail":"Only HR or Admin can approve leave"},
+                status=403,
+            )
+        leave.status="approved"
+        leave.decision_by= request.user
+        leave.decision_at =now()
+        leave.save()
 
-            return Response({"status":"approved"})
-        
-        @action(detail=True,
-                methods=["post"],
-                permission_classes=[IsownerOrAdmin],
-                )
-        def reject(self,request,pk=None):
-            leave= self.get_object()
+        return Response({"status":"approved"})
+    
+    @action(detail=True,
+            methods=["post"],
+            permission_classes=[IsownerOrAdmin],
+            )
+    def reject(self,request,pk=None):
+        leave= self.get_object()
 
-            if request.user.role not in ["admin","hr"] and not request.user.is_superuser:
-                return Response(
-                    {"detail":"ONly Hr or Admin can reject leave"}
-                )
-            leave.status= "rejected"
-            leave.decision_by=request.user
-            leave.decision_at= now()
-            leave.decision_comment=request.data.get("comment","")
-            leave.save()
+        if request.user.role not in ["admin","hr"] and not request.user.is_superuser:
+            return Response(
+                {"detail":"ONly Hr or Admin can reject leave"}
+            )
+        leave.status= "rejected"
+        leave.decision_by=request.user
+        leave.decision_at= now()
+        leave.decision_comment=request.data.get("comment","")
+        leave.save()
 
-            return Response({"status":"rejected"})
+        return Response({"status":"rejected"})
 
 class LeaveBalanceViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class=LeaveBalanceSerializer
@@ -81,3 +81,7 @@ class LeaveBalanceViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         return LeaveBalance.objects.filter(user=self.request.user)
     
+class LeaveTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = LeaveType.objects.all()
+    serializer_class = LeaveTypeSerializer
+    permission_classes = [BaseModulePermission]
