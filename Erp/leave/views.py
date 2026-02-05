@@ -82,6 +82,20 @@ class LeaveBalanceViewSet(viewsets.ReadOnlyModelViewSet):
         return LeaveBalance.objects.filter(user=self.request.user)
     
 class LeaveTypeViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = LeaveType.objects.all()
+   
     serializer_class = LeaveTypeSerializer
     permission_classes = [BaseModulePermission]
+
+    module_name= "leave"
+    def get_queryset(self):
+        user=self.request.user
+        if not user.company:
+            return LeaveType.objects.none()
+        
+        
+        return LeaveType.objects.filter(
+            company=user.company,
+            active=True
+        )
+
+
