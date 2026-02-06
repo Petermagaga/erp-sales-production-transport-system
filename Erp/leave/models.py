@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import Q
 from cores.models import Company
-from django.core.exceptions import ValidationError
+
 from django.conf import settings
 
 class LeaveType(models.Model):
@@ -51,49 +51,11 @@ class LeaveRequest(models.Model):
     decision_at =models.DateTimeField(null=True,blank=True)
     decision_comment=models.TextField(blank=True)
 
-    created_at=models.DateTimeField(auto_now_add=True)
-
-    def clean(self):
-        if self.start_date>self.end_date:
-            raise ValidationError("End date cannot be before start date")
-    
-        overlapping=LeaveRequest.objects.filter(
-             user=self.user,
-             status__in=["pending","approved"],
-         ).filter(
-             Q(start_date__lte=self.end_date)&
-             Q(end_date__gte=self.start_date)
-         )
-        
-        if self.pk:
-            overlapping = overlapping.exclude(pk=self.pk)
-
-        if overlapping.exists():
-            raise ValidationError("YOU already have during this period")
-    
-    def check_balance(self):
-        if not self.leave_type.requires_balance:
-            return
-
-        from .models import LeaveBalance
-
-        try:
-            balance = LeaveBalance.objects.get(
-                user=self.user,
-                leave_type=self.leave_type
-            )
-        except LeaveBalance.DoesNotExist:
-            raise ValidationError("No leave balance available.")
-
-        if balance.remaining_days < self.total_days:
-            raise ValidationError("Insufficient leave balance.")
+    created_at=models.DateTimeField(auto_now_add=True) 
 
     
     def save(self,*args,**kwargs):
         self.total_days=(self.end_date - self.start_date).days+1
-
-        if self.status == "pending":
-            self.check_balance()
 
         super().save(*args,**kwargs)
 

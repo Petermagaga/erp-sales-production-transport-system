@@ -24,6 +24,50 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             "decision_at",
         )
 
+    def validate(self, data):
+        user = self.context["request"].user
+        leave_type = data["leave_type"]
+        start = data["start_date"]
+        end = data["end_date"]
+
+        if start > end:
+            raise serializers.ValidationError({
+                "end_date": "End date cannot be before start date"
+            })
+
+        overlapping = LeaveRequest.objects.filter(
+            user=user,
+            status__in=["pending", "approved"],
+            start_date__lte=end,
+            end_date__gte=start,
+        )
+
+        if overlapping.exists():
+            raise serializers.ValidationError(
+                "You already have a leave during this period"
+            )
+
+        total_days = (end - start).days + 1
+
+        if leave_type.requires_balance:
+            try:
+                balance = LeaveBalance.objects.get(
+                    user=user,
+                    leave_type=leave_type
+                )
+            except LeaveBalance.DoesNotExist:
+                raise serializers.ValidationError(
+                    "No leave balance available"
+                )
+
+            if balance.remaining_days < total_days:
+                raise serializers.ValidationError(
+                    "Insufficient leave balance"
+                )
+
+        return data
+
+
 class LeaveBalanceSerializer(serializers.ModelSerializer):
     remaining_days=serializers.IntegerField(read_only=True)
 
