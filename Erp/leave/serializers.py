@@ -42,6 +42,9 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             end_date__gte=start,
         )
 
+        if self.instance:
+            overlapping=overlapping.exclude(pk=self.instance.pk)
+
         if overlapping.exists():
             raise serializers.ValidationError(
                 "You already have a leave during this period"

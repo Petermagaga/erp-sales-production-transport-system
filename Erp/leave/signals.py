@@ -53,7 +53,7 @@ def create_balnces_for_leave_type(sender,instance,created,**kwargs):
         return
     
     users=User.objects.filter(company=instance.company)
-    for user in user:
+    for user in users:
         LeaveBalance.objects.get_or_create(
             user=user,
             company=instance.company,

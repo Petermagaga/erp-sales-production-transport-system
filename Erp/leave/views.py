@@ -71,6 +71,14 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         leave.save()
 
         return Response({"status":"rejected"})
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=False)
+        print(serializer.errors)
+        return super().create(request, *args, **kwargs)
+
+
 
 class LeaveBalanceViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class=LeaveBalanceSerializer

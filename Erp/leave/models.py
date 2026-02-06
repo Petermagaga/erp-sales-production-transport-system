@@ -55,8 +55,6 @@ class LeaveRequest(models.Model):
 
     
     def save(self,*args,**kwargs):
-        self.total_days=(self.end_date - self.start_date).days+1
-
         super().save(*args,**kwargs)
 
     def __str__(self):
