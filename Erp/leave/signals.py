@@ -47,16 +47,17 @@ def create_default_leave_types(sender,instance,created,**kwargs):
 
 User =get_user_model()
 
-@receiver(post_save,sender=LeaveType)
-def create_balnces_for_leave_type(sender,instance,created,**kwargs):
-    if not created:
+@receiver(post_save, sender=User)
+def create_balances_for_user(sender, instance, created, **kwargs):
+    if not created or not instance.company:
         return
-    
-    users=User.objects.filter(company=instance.company)
-    for user in users:
+
+    leave_types = LeaveType.objects.filter(company=instance.company)
+
+    for lt in leave_types:
         LeaveBalance.objects.get_or_create(
-            user=user,
+            user=instance,
             company=instance.company,
-            leave_type=instance,
-            defaults={"earned_days":instance.max_days_per_year}
+            leave_type=lt,
+            defaults={"earned_days": lt.max_days_per_year}
         )

@@ -53,14 +53,14 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
         total_days = (end - start).days + 1
 
         if leave_type.requires_balance:
-            try:
-                balance = LeaveBalance.objects.get(
-                    user=user,
-                    leave_type=leave_type
-                )
-            except LeaveBalance.DoesNotExist:
+            balance = LeaveBalance.objects.filter(
+                user=user,
+                leave_type=leave_type
+            ).first()
+
+            if not balance:
                 raise serializers.ValidationError(
-                    "No leave balance available"
+                    "Leave balance not initialized. Contact admin."
                 )
 
             if balance.remaining_days < total_days:
@@ -68,7 +68,7 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
                     "Insufficient leave balance"
                 )
 
-        return data
+                return data
 
 
 class LeaveBalanceSerializer(serializers.ModelSerializer):
